@@ -1,0 +1,741 @@
+{
+  "project_name": {
+    "value": "การจ้างเหมาบริการทำความสะอาดและดูแลสวน จำนวน 6 อัตรา ประจำปีงบประมาณ พ.ศ.2570",
+    "source": {
+      "page": 1,
+      "quote": "การจ้างเหมาบริการทำความสะอาดและดูแลสวน จำนวน 6 อัตรา ประจำปีงบประมาณ พ.ศ.2570"
+    },
+    "confidence": "high",
+    "reason": null
+  },
+  "project_id": {
+    "value": null,
+    "source": null,
+    "confidence": "low",
+    "reason": "เลขที่เอกสารเว้นว่างไว้ในเอกสาร (เป็นฉบับร่าง)"
+  },
+  "agency": {
+    "value": "กรมสรรพากร",
+    "source": {
+      "page": 1,
+      "quote": "ตามประกาศ กรมสรรพากร"
+    },
+    "confidence": "high",
+    "reason": null
+  },
+  "announcement_date": {
+    "value": "28 สิงหาคม 2569",
+    "source": {
+      "page": 14,
+      "quote": "ประกาศขึ้นเว็บวันที่ 28 สิงหาคม 2569"
+    },
+    "confidence": "high",
+    "reason": null
+  },
+  "procurement_method": {
+    "value": "e-bidding",
+    "source": {
+      "page": 1,
+      "quote": "ด้วยวิธีประกวดราคาอิเล็กทรอนิกส์ (e-bidding)"
+    },
+    "confidence": "high",
+    "reason": null
+  },
+  "budget_amount": {
+    "value": null,
+    "source": null,
+    "confidence": "low",
+    "reason": "ไม่มีตัวเลขวงเงินงบประมาณระบุในเอกสาร"
+  },
+  "median_price": {
+    "value": null,
+    "source": null,
+    "confidence": "low",
+    "reason": "ไม่มีตัวเลขราคากลางระบุในเอกสาร"
+  },
+  "key_dates": [],
+  "bid_bond": {
+    "amount": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    },
+    "percent_stated": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    },
+    "accepted_forms": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    }
+  },
+  "bid_bond_percent_of_budget": null,
+  "contract_bond": {
+    "amount": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่ทราบวงเงินงบประมาณ จึงคำนวณจำนวนเงินไม่ได้"
+    },
+    "percent_stated": {
+      "value": 5.0,
+      "source": {
+        "page": 10,
+        "quote": "จะต้องวางหลักประกันสัญญาเป็นจำนวนเงินเท่ากับร้อยละ 5 ของราคาค่าจ้างที่ประกวดราคาอิเล็กทรอนิกส์ได้"
+      },
+      "confidence": "high",
+      "reason": null
+    },
+    "accepted_forms": {
+      "value": [
+        "เงินสด",
+        "เช็คหรือดราฟท์ที่ธนาคารสั่งจ่าย",
+        "หนังสือค้ำประกันของธนาคารภายในประเทศ",
+        "หนังสือค้ำประกันของบริษัทเงินทุนหรือบริษัทเงินทุนหลักทรัพย์",
+        "พันธบัตรรัฐบาลไทย"
+      ],
+      "source": {
+        "page": 11,
+        "quote": "เงินสด / เช็คหรือดราฟท์ / หนังสือค้ำประกันธนาคาร / หนังสือค้ำประกันบริษัทเงินทุน / พันธบัตรรัฐบาลไทย"
+      },
+      "confidence": "high",
+      "reason": null
+    }
+  },
+  "contract_bond_percent_of_budget": null,
+  "warranty_bond": {
+    "amount": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    },
+    "percent_stated": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    },
+    "accepted_forms": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    }
+  },
+  "warranty_bond_percent_of_budget": null,
+  "qualifications": [
+    {
+      "text": {
+        "value": "ผู้ยื่นข้อเสนอจะต้องมีทุนจดทะเบียนที่เรียกชำระมูลค่าหุ้นแล้ว ณ วันที่ยื่นข้อเสนอ ไม่ต่ำกว่า 1 ล้านบาท",
+        "source": {
+          "page": 4,
+          "quote": "ผู้ยื่นข้อเสนอจะต้องมีทุนจดทะเบียนที่เรียกชำระมูลค่าหุ้นแล้ว ณ วันที่ยื่นข้อเสนอ ไม่ต่ำกว่า 1 ล้านบาท"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "category": {
+        "value": "ทุนจดทะเบียน",
+        "source": {
+          "page": 4,
+          "quote": "ทุนจดทะเบียนที่เรียกชำระมูลค่าหุ้นแล้ว"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "operator": {
+        "value": "ไม่น้อยกว่า",
+        "source": {
+          "page": 4,
+          "quote": "ไม่ต่ำกว่า 1 ล้านบาท"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "value": {
+        "value": 1000000.0,
+        "source": {
+          "page": 4,
+          "quote": "ไม่ต่ำกว่า 1 ล้านบาท"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "unit": {
+        "value": "บาท",
+        "source": {
+          "page": 4,
+          "quote": "1 ล้านบาท"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    }
+  ],
+  "deliverables": [
+    {
+      "phase": {
+        "value": "งวดที่ 1",
+        "source": {
+          "page": 11,
+          "quote": "งวดที่ 1 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน ตุลาคม 2569",
+        "source": {
+          "page": 11,
+          "quote": "เมื่อผู้รับจ้างได้ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน ตุลาคม 2569"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": null,
+        "source": null,
+        "confidence": "low",
+        "reason": "เอกสารระบุเป็นเดือนปฏิทิน ไม่ได้ระบุจำนวนวันนับจากวันลงนามสัญญา"
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 11,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 2",
+        "source": {
+          "page": 11,
+          "quote": "งวดที่ 2 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน พฤศจิกายน 2569",
+        "source": {
+          "page": 11,
+          "quote": "เมื่อผู้รับจ้างได้ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน พฤศจิกายน 2569"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": null,
+        "source": null,
+        "confidence": "low",
+        "reason": "เอกสารระบุเป็นเดือนปฏิทิน ไม่ได้ระบุจำนวนวันนับจากวันลงนามสัญญา"
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 11,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 3",
+        "source": {
+          "page": 11,
+          "quote": "งวดที่ 3 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน ธันวาคม 2569",
+        "source": {
+          "page": 11,
+          "quote": "เมื่อผู้รับจ้างได้ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน ธันวาคม 2569"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": null,
+        "source": null,
+        "confidence": "low",
+        "reason": "เอกสารระบุเป็นเดือนปฏิทิน ไม่ได้ระบุจำนวนวันนับจากวันลงนามสัญญา"
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 11,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 4",
+        "source": {
+          "page": 11,
+          "quote": "งวดที่ 4 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน มกราคม 2570",
+        "source": {
+          "page": 11,
+          "quote": "เมื่อผู้รับจ้างได้ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน มกราคม 2570"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": null,
+        "source": null,
+        "confidence": "low",
+        "reason": "เอกสารระบุเป็นเดือนปฏิทิน ไม่ได้ระบุจำนวนวันนับจากวันลงนามสัญญา"
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 11,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 5",
+        "source": {
+          "page": 11,
+          "quote": "งวดที่ 5 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน กุมภาพันธ์ 2570",
+        "source": {
+          "page": 11,
+          "quote": "เมื่อผู้รับจ้างได้ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน กุมภาพันธ์ 2570"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": null,
+        "source": null,
+        "confidence": "low",
+        "reason": "เอกสารระบุเป็นเดือนปฏิทิน ไม่ได้ระบุจำนวนวันนับจากวันลงนามสัญญา"
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 11,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 6",
+        "source": {
+          "page": 12,
+          "quote": "งวดที่ 6 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน มีนาคม 2570",
+        "source": {
+          "page": 12,
+          "quote": "เมื่อผู้รับจ้างได้ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน มีนาคม 2570"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": null,
+        "source": null,
+        "confidence": "low",
+        "reason": "เอกสารระบุเป็นเดือนปฏิทิน ไม่ได้ระบุจำนวนวันนับจากวันลงนามสัญญา"
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 12,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 7",
+        "source": {
+          "page": 12,
+          "quote": "งวดที่ 7 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน เมษายน 2570",
+        "source": {
+          "page": 12,
+          "quote": "เมื่อผู้รับจ้างได้ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน เมษายน 2570"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": null,
+        "source": null,
+        "confidence": "low",
+        "reason": "เอกสารระบุเป็นเดือนปฏิทิน ไม่ได้ระบุจำนวนวันนับจากวันลงนามสัญญา"
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 12,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 8",
+        "source": {
+          "page": 12,
+          "quote": "งวดที่ 8 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน พฤษภาคม 2570",
+        "source": {
+          "page": 12,
+          "quote": "เมื่อผู้รับจ้างได้ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน พฤษภาคม 2570"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": null,
+        "source": null,
+        "confidence": "low",
+        "reason": "เอกสารระบุเป็นเดือนปฏิทิน ไม่ได้ระบุจำนวนวันนับจากวันลงนามสัญญา"
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 12,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 9",
+        "source": {
+          "page": 12,
+          "quote": "งวดที่ 9 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน มิถุนายน 2570",
+        "source": {
+          "page": 12,
+          "quote": "เมื่อผู้รับจ้างได้ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน มิถุนายน 2570"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": null,
+        "source": null,
+        "confidence": "low",
+        "reason": "เอกสารระบุเป็นเดือนปฏิทิน ไม่ได้ระบุจำนวนวันนับจากวันลงนามสัญญา"
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 12,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 10",
+        "source": {
+          "page": 12,
+          "quote": "งวดที่ 10 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน กรกฎาคม 2570",
+        "source": {
+          "page": 12,
+          "quote": "เมื่อผู้รับจ้างได้ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน กรกฎาคม 2570"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": null,
+        "source": null,
+        "confidence": "low",
+        "reason": "เอกสารระบุเป็นเดือนปฏิทิน ไม่ได้ระบุจำนวนวันนับจากวันลงนามสัญญา"
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 12,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 11",
+        "source": {
+          "page": 12,
+          "quote": "งวดที่ 11 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน สิงหาคม 2570",
+        "source": {
+          "page": 12,
+          "quote": "เมื่อผู้รับจ้างได้ปฏิบัติงานจ้างเหมาบริการทำความสะอาดและดูแลสวน ประจำเดือน สิงหาคม 2570"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": null,
+        "source": null,
+        "confidence": "low",
+        "reason": "เอกสารระบุเป็นเดือนปฏิทิน ไม่ได้ระบุจำนวนวันนับจากวันลงนามสัญญา"
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 12,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดสุดท้าย",
+        "source": {
+          "page": 12,
+          "quote": "งวดสุดท้าย เป็นจำนวนเงินในอัตราร้อยละ 8.37 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานทั้งหมดแล้วเสร็จเรียบร้อยตามสัญญา และกรมได้ตรวจรับมอบงานจ้างเรียบร้อยแล้ว",
+        "source": {
+          "page": 12,
+          "quote": "เมื่อผู้รับจ้างได้ปฏิบัติงานทั้งหมดให้แล้วเสร็จเรียบร้อยตามสัญญา"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": null,
+        "source": null,
+        "confidence": "low",
+        "reason": "เอกสารระบุเป็นเดือนปฏิทิน ไม่ได้ระบุจำนวนวันนับจากวันลงนามสัญญา"
+      },
+      "payment_percent": {
+        "value": 8.37,
+        "source": {
+          "page": 12,
+          "quote": "งวดสุดท้าย เป็นจำนวนเงินในอัตราร้อยละ 8.37 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    }
+  ],
+  "penalty": {
+    "rate_percent_per_day": {
+      "value": 0.1,
+      "source": {
+        "page": 12,
+        "quote": "กรณีที่ผู้รับจ้างปฏิบัติผิดสัญญาจ้างนอกเหนือจากข้อ 8.1 จะกำหนดค่าปรับเป็นรายวัน ในอัตราร้อยละ 0.10 ของราคาค่าจ้าง"
+      },
+      "confidence": "high",
+      "reason": null
+    },
+    "cap_percent": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีเพดานค่าปรับระบุในเอกสาร"
+    }
+  },
+  "required_documents": [
+    {
+      "value": "สำเนาหนังสือรับรองการจดทะเบียนนิติบุคคล (กรณีนิติบุคคล)",
+      "source": {
+        "page": 2,
+        "quote": "ให้ยื่นสำเนาหนังสือรับรองการจดทะเบียนนิติบุคคล บัญชีรายชื่อหุ้นส่วนผู้จัดการ"
+      },
+      "confidence": "high",
+      "reason": null
+    },
+    {
+      "value": "สำเนาบัตรประจำตัวประชาชน (กรณีบุคคลธรรมดา)",
+      "source": {
+        "page": 2,
+        "quote": "ให้ยื่นสำเนาบัตรประจำตัวประชาชนของผู้นั้น"
+      },
+      "confidence": "high",
+      "reason": null
+    },
+    {
+      "value": "หลักฐานมูลค่าสุทธิของกิจการหรือทุนจดทะเบียน",
+      "source": {
+        "page": 3,
+        "quote": "ผู้ยื่นข้อเสนอต้องแสดงหลักฐานเกี่ยวกับมูลค่าสุทธิของกิจการ"
+      },
+      "confidence": "high",
+      "reason": null
+    },
+    {
+      "value": "สำเนาใบทะเบียนพาณิชย์ (ถ้ามี)",
+      "source": {
+        "page": 6,
+        "quote": "สำเนาใบทะเบียนพาณิชย์ (ถ้ามี)"
+      },
+      "confidence": "high",
+      "reason": null
+    },
+    {
+      "value": "สำเนาใบทะเบียนภาษีมูลค่าเพิ่ม (ถ้ามี)",
+      "source": {
+        "page": 6,
+        "quote": "สำเนาใบทะเบียนภาษีมูลค่าเพิ่ม (ถ้ามี)"
+      },
+      "confidence": "high",
+      "reason": null
+    },
+    {
+      "value": "สำเนาใบขึ้นทะเบียนผู้ประกอบการวิสาหกิจขนาดกลางและขนาดย่อม (SMEs) (ถ้ามี)",
+      "source": {
+        "page": 6,
+        "quote": "สำเนาใบขึ้นทะเบียนผู้ประกอบการวิสาหกิจขนาดกลางและขนาดย่อม (SMEs) (ถ้ามี)"
+      },
+      "confidence": "high",
+      "reason": null
+    }
+  ],
+  "evaluation_criteria": {
+    "method": {
+      "value": "ราคา",
+      "source": {
+        "page": 9,
+        "quote": "จะพิจารณาตัดสินโดยใช้ หลักเกณฑ์ราคา"
+      },
+      "confidence": "high",
+      "reason": null
+    },
+    "price_weight": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ใช้เกณฑ์ราคาล้วน ไม่ได้ระบุเป็นสัดส่วนน้ำหนัก %"
+    },
+    "technical_weight": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ใช้เกณฑ์ราคาล้วน ไม่มีเกณฑ์เทคนิค"
+    },
+    "sub_criteria": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    }
+  },
+  "risk_flags": [
+    {
+      "text": "เอกสารนี้เป็นฉบับร่าง ข้อมูลสำคัญบางส่วนยังไม่ระบุ (เลขที่ประกาศ วันและเวลายื่นข้อเสนอ วงเงินงบประมาณ)",
+      "origin": "model",
+      "source": {
+        "page": 1,
+        "quote": "ร่าง"
+      }
+    }
+  ],
+  "contact": {
+    "name_redacted": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่พบข้อมูลติดต่อในเอกสาร"
+    },
+    "department": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่พบข้อมูลติดต่อในเอกสาร"
+    },
+    "phone": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่พบข้อมูลติดต่อในเอกสาร"
+    },
+    "email": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่พบข้อมูลติดต่อในเอกสาร"
+    }
+  }
+}

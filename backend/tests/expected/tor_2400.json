@@ -1,0 +1,205 @@
+{
+  "project_name": {
+    "value": "ประกวดราคาจ้างพนักงานรักษาความสะอาด ประจำปีงบประมาณ พ.ศ. 2569 จำนวน 46 อัตรา ด้วยวิธีประกวดราคาอิเล็กทรอนิกส์ (e-bidding)",
+    "source": {
+      "page": 1,
+      "quote": "เรื่อง  ประกวดราคาจ้างพนักงานรักษาความสะอาด ประจำปีงบประมาณ พ.ศ. 2569 จำนวน 46 อัตรา"
+    },
+    "confidence": "high",
+    "reason": null
+  },
+  "project_id": {
+    "value": null,
+    "source": null,
+    "confidence": "low",
+    "reason": "ไม่ระบุเลขที่ประกาศในเอกสาร (เป็นฉบับร่าง ช่องเลขที่เว้นว่างไว้)"
+  },
+  "agency": {
+    "value": "กรมสรรพากร โดยสำนักงานสรรพากรภาค 1",
+    "source": {
+      "page": 1,
+      "quote": "กรมสรรพากร โดยส านักงานสรรพากรภาค 1 มีความประสงค์จะประกวดราคา"
+    },
+    "confidence": "high",
+    "reason": null
+  },
+  "announcement_date": {
+    "value": null,
+    "source": null,
+    "confidence": "low",
+    "reason": "วันที่ประกาศเว้นว่างไว้ในเอกสาร (เป็นฉบับร่าง)"
+  },
+  "procurement_method": {
+    "value": "e-bidding",
+    "source": {
+      "page": 1,
+      "quote": "ด้วยวิธีประกวดราคาอิเล็กทรอนิกส์ (e-bidding)"
+    },
+    "confidence": "high",
+    "reason": null
+  },
+  "budget_amount": {
+    "value": null,
+    "source": null,
+    "confidence": "low",
+    "reason": "เอกสารระบุเฉพาะราคากลาง ไม่ได้แยกระบุวงเงินงบประมาณต่างหาก"
+  },
+  "median_price": {
+    "value": 7672800.0,
+    "source": {
+      "page": 1,
+      "quote": "ราคากลางของงานจ้าง ในการประกวดราคาครั้งนี้ เป็นเงินทั้งสิ้น 7,672,800.00 บาท (เจ็ดล้านหกแสนเจ็ดหมื่นสองพันแปดร้อยบาทถ้วน)"
+    },
+    "confidence": "high",
+    "reason": null
+  },
+  "key_dates": [],
+  "bid_bond": {
+    "amount": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    },
+    "percent_stated": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    },
+    "accepted_forms": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    }
+  },
+  "bid_bond_percent_of_budget": null,
+  "contract_bond": {
+    "amount": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    },
+    "percent_stated": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    },
+    "accepted_forms": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    }
+  },
+  "contract_bond_percent_of_budget": null,
+  "warranty_bond": {
+    "amount": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    },
+    "percent_stated": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    },
+    "accepted_forms": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    }
+  },
+  "warranty_bond_percent_of_budget": null,
+  "qualifications": [],
+  "deliverables": [],
+  "penalty": {
+    "rate_percent_per_day": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    },
+    "cap_percent": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    }
+  },
+  "required_documents": [],
+  "evaluation_criteria": {
+    "method": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    },
+    "price_weight": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    },
+    "technical_weight": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    },
+    "sub_criteria": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    }
+  },
+  "risk_flags": [
+    {
+      "text": "เอกสารนี้เป็นฉบับร่าง (มีคำว่า \"- ร่าง -\" กำกับ) ข้อมูลสำคัญหลายรายการยังไม่ระบุ เช่น เลขที่ประกาศ วันที่ประกาศ วันและเวลายื่นข้อเสนอ",
+      "origin": "model",
+      "source": {
+        "page": 1,
+        "quote": "- ร่าง -"
+      }
+    }
+  ],
+  "contact": {
+    "name_redacted": {
+      "value": "สรรพากรภาค 1 ปฏิบัติราชการแทนอธิบดีกรมสรรพากร",
+      "source": {
+        "page": 1,
+        "quote": "สรรพากรภาค 1 ปฏิบัติราชการแทน\n\nอธิบดีกรมสรรพากร"
+      },
+      "confidence": "high",
+      "reason": null
+    },
+    "department": {
+      "value": "สำนักงานสรรพากรภาค 1",
+      "source": {
+        "page": 1,
+        "quote": "กรมสรรพากร โดยส านักงานสรรพากรภาค 1"
+      },
+      "confidence": "high",
+      "reason": null
+    },
+    "phone": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่พบข้อมูลติดต่อในเอกสาร"
+    },
+    "email": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่พบข้อมูลติดต่อในเอกสาร"
+    }
+  }
+}

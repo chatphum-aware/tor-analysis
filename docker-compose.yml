@@ -1,0 +1,12 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  # frontend service is added in Step 5 once frontend/ has real code --
+  # referencing a Dockerfile that doesn't exist yet would break `docker
+  # compose up` for no reason right now.

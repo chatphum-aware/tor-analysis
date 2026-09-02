@@ -1,0 +1,852 @@
+{
+  "project_name": {
+    "value": "โครงการจ้างเหมาบริการทำความสะอาดอาคารสำนักงานการตรวจเงินแผ่นดิน (ส่วนกลาง) และภายในอาคารสถานที่ปฏิบัติงานชั่วคราว ณ อาคารพหลโยธิน เซ็นเตอร์ ประจำปีงบประมาณ พ.ศ. 2570",
+    "source": {
+      "page": 1,
+      "quote": "การจ้างโครงการจ้างเหมาบริการทำความสะอาดอาคารสำนักงานการตรวจเงินแผ่นดิน (ส่วนกลาง) และภายในอาคารสถานที่ปฏิบัติงานชั่วคราว ณ อาคารพหลโยธิน เซ็นเตอร์ ประจำปีงบประมาณ พ.ศ. 2570"
+    },
+    "confidence": "high",
+    "reason": null
+  },
+  "project_id": {
+    "value": "001/2570",
+    "source": {
+      "page": 1,
+      "quote": "เลขที่  001/2570"
+    },
+    "confidence": "high",
+    "reason": null
+  },
+  "agency": {
+    "value": "สำนักงานการตรวจเงินแผ่นดิน",
+    "source": {
+      "page": 1,
+      "quote": "ตามประกาศ สำนักงานการตรวจเงินแผ่นดิน"
+    },
+    "confidence": "high",
+    "reason": null
+  },
+  "announcement_date": {
+    "value": "27 สิงหาคม 2569",
+    "source": {
+      "page": 1,
+      "quote": "ลงวันที่  27  สิงหาคม  2569"
+    },
+    "confidence": "high",
+    "reason": null
+  },
+  "procurement_method": {
+    "value": "e-bidding",
+    "source": {
+      "page": 1,
+      "quote": "ด้วยวิธีประกวดราคาอิเล็กทรอนิกส์ (e-bidding)"
+    },
+    "confidence": "high",
+    "reason": null
+  },
+  "budget_amount": {
+    "value": null,
+    "source": null,
+    "confidence": "low",
+    "reason": "ไม่มีตัวเลขวงเงินงบประมาณระบุในเอกสารนี้ (อาจอยู่ในเอกสารแนบตารางแสดงวงเงินงบประมาณ บก.06 ที่แยกต่างหาก)"
+  },
+  "median_price": {
+    "value": null,
+    "source": null,
+    "confidence": "low",
+    "reason": "ไม่มีตัวเลขราคากลางระบุในเอกสารนี้"
+  },
+  "key_dates": [
+    {
+      "type": {
+        "value": "ยื่นข้อเสนอ",
+        "source": {
+          "page": 7,
+          "quote": "ผู้ยื่นข้อเสนอจะต้องยื่นข้อเสนอและเสนอราคาทางระบบจัดซื้อจัดจ้างภาครัฐด้วยอิเล็กทรอนิกส์ในวันที่"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "date_be": {
+        "value": "4 กันยายน 2569",
+        "source": {
+          "page": 7,
+          "quote": "4 กันยายน 2569 ระหว่างเวลา 09.00 น. ถึง 12.00 น."
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "date_ce": "4 กันยายน 2026",
+      "time": {
+        "value": "09.00 น. ถึง 12.00 น.",
+        "source": {
+          "page": 7,
+          "quote": "ระหว่างเวลา 09.00 น. ถึง 12.00 น."
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "location": {
+        "value": null,
+        "source": null,
+        "confidence": "low",
+        "reason": "ยื่นผ่านระบบจัดซื้อจัดจ้างภาครัฐด้วยอิเล็กทรอนิกส์ ไม่มีสถานที่ทางกายภาพระบุ"
+      }
+    }
+  ],
+  "bid_bond": {
+    "amount": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    },
+    "percent_stated": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    },
+    "accepted_forms": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    }
+  },
+  "bid_bond_percent_of_budget": null,
+  "contract_bond": {
+    "amount": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่ทราบวงเงินงบประมาณ จึงคำนวณจำนวนเงินไม่ได้"
+    },
+    "percent_stated": {
+      "value": 5.0,
+      "source": {
+        "page": 10,
+        "quote": "จะต้องวางหลักประกันสัญญาเป็นจำนวนเงินเท่ากับร้อยละ 5 ของราคาค่าจ้างที่ประกวดราคาอิเล็กทรอนิกส์ได้"
+      },
+      "confidence": "high",
+      "reason": null
+    },
+    "accepted_forms": {
+      "value": [
+        "เงินสด",
+        "เช็คหรือดราฟท์ที่ธนาคารสั่งจ่าย",
+        "หนังสือค้ำประกันของธนาคารภายในประเทศ",
+        "หนังสือค้ำประกันของบริษัทเงินทุนหรือบริษัทเงินทุนหลักทรัพย์",
+        "พันธบัตรรัฐบาลไทย"
+      ],
+      "source": {
+        "page": 11,
+        "quote": "เงินสด / เช็คหรือดราฟท์ / หนังสือค้ำประกันธนาคาร / หนังสือค้ำประกันบริษัทเงินทุน / พันธบัตรรัฐบาลไทย"
+      },
+      "confidence": "high",
+      "reason": null
+    }
+  },
+  "contract_bond_percent_of_budget": null,
+  "warranty_bond": {
+    "amount": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    },
+    "percent_stated": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    },
+    "accepted_forms": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    }
+  },
+  "warranty_bond_percent_of_budget": null,
+  "qualifications": [
+    {
+      "text": {
+        "value": "ผู้ยื่นข้อเสนอต้องมีผลงานประเภทเดียวกันกับงานที่ประกวดราคาจ้าง ในวงเงินไม่น้อยกว่า 1,877,400.00 บาท และเป็นผลงานที่เป็นคู่สัญญาโดยตรงกับหน่วยงานของรัฐ",
+        "source": {
+          "page": 2,
+          "quote": "ผู้ยื่นข้อเสนอต้องมีผลงานประเภทเดียวกันกับงานที่ประกวดราคาจ้าง ในวงเงินไม่น้อยกว่า 1,877,400.00 บาท (หนึ่งล้านแปดแสนเจ็ดหมื่นเจ็ดพันสี่ร้อยบาทถ้วน)"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "category": {
+        "value": "ผลงานที่ผ่านมา",
+        "source": {
+          "page": 2,
+          "quote": "ผู้ยื่นข้อเสนอต้องมีผลงานประเภทเดียวกันกับงานที่ประกวดราคาจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "operator": {
+        "value": "ไม่น้อยกว่า",
+        "source": {
+          "page": 2,
+          "quote": "ในวงเงินไม่น้อยกว่า 1,877,400.00 บาท"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "value": {
+        "value": 1877400.0,
+        "source": {
+          "page": 2,
+          "quote": "ไม่น้อยกว่า 1,877,400.00 บาท (หนึ่งล้านแปดแสนเจ็ดหมื่นเจ็ดพันสี่ร้อยบาทถ้วน)"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "unit": {
+        "value": "บาท",
+        "source": {
+          "page": 2,
+          "quote": "1,877,400.00 บาท"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "text": {
+        "value": "ผู้ยื่นข้อเสนอจะต้องมีทุนจดทะเบียนที่เรียกชำระมูลค่าหุ้นแล้ว ณ วันที่ยื่นข้อเสนอ ไม่ต่ำกว่า 1 ล้านบาท",
+        "source": {
+          "page": 3,
+          "quote": "ผู้ยื่นข้อเสนอจะต้องมีทุนจดทะเบียนที่เรียกชำระมูลค่าหุ้นแล้ว ณ วันที่ยื่นข้อเสนอ ไม่ต่ำกว่า 1 ล้านบาท"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "category": {
+        "value": "ทุนจดทะเบียน",
+        "source": {
+          "page": 3,
+          "quote": "ทุนจดทะเบียนที่เรียกชำระมูลค่าหุ้นแล้ว"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "operator": {
+        "value": "ไม่น้อยกว่า",
+        "source": {
+          "page": 3,
+          "quote": "ไม่ต่ำกว่า 1 ล้านบาท"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "value": {
+        "value": 1000000.0,
+        "source": {
+          "page": 3,
+          "quote": "ไม่ต่ำกว่า 1 ล้านบาท"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "unit": {
+        "value": "บาท",
+        "source": {
+          "page": 3,
+          "quote": "1 ล้านบาท"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    }
+  ],
+  "deliverables": [
+    {
+      "phase": {
+        "value": "งวดที่ 1",
+        "source": {
+          "page": 11,
+          "quote": "งวดที่ 1 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานงวดที่ 1 ประจำเดือนตุลาคม 2569 ให้แล้วเสร็จภายใน 31 วัน",
+        "source": {
+          "page": 11,
+          "quote": "ปฏิบัติงานงวดที่ 1 ประจำเดือนตุลาคม 2569 ให้แล้วเสร็จภายใน 31 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": 31,
+        "source": {
+          "page": 11,
+          "quote": "ให้แล้วเสร็จภายใน 31 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 11,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 2",
+        "source": {
+          "page": 11,
+          "quote": "งวดที่ 2 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานงวดที่ 2 ประจำเดือนพฤศจิกายน 2569 ให้แล้วเสร็จภายใน 61 วัน",
+        "source": {
+          "page": 11,
+          "quote": "ปฏิบัติงานงวดที่ 2 ประจำเดือนพฤศจิกายน 2569 ให้แล้วเสร็จภายใน 61 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": 61,
+        "source": {
+          "page": 11,
+          "quote": "ให้แล้วเสร็จภายใน 61 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 11,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 3",
+        "source": {
+          "page": 11,
+          "quote": "งวดที่ 3 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานงวดที่ 3 ประจำเดือนธันวาคม 2569 ให้แล้วเสร็จภายใน 92 วัน",
+        "source": {
+          "page": 11,
+          "quote": "ปฏิบัติงานงวดที่ 3 ประจำเดือนธันวาคม 2569 ให้แล้วเสร็จภายใน 92 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": 92,
+        "source": {
+          "page": 11,
+          "quote": "ให้แล้วเสร็จภายใน 92 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 11,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 4",
+        "source": {
+          "page": 11,
+          "quote": "งวดที่ 4 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานงวดที่ 4 ประจำเดือนมกราคม 2570 ให้แล้วเสร็จภายใน 123 วัน",
+        "source": {
+          "page": 11,
+          "quote": "ปฏิบัติงานงวดที่ 4 ประจำเดือนมกราคม 2570 ให้แล้วเสร็จภายใน 123 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": 123,
+        "source": {
+          "page": 11,
+          "quote": "ให้แล้วเสร็จภายใน 123 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 11,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 5",
+        "source": {
+          "page": 11,
+          "quote": "งวดที่ 5 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานงวดที่ 5 ประจำเดือนกุมภาพันธ์ 2570 ให้แล้วเสร็จภายใน 151 วัน",
+        "source": {
+          "page": 11,
+          "quote": "ปฏิบัติงานงวดที่ 5 ประจำเดือนกุมภาพันธ์ 2570 ให้แล้วเสร็จภายใน 151 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": 151,
+        "source": {
+          "page": 11,
+          "quote": "ให้แล้วเสร็จภายใน 151 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 11,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 6",
+        "source": {
+          "page": 11,
+          "quote": "งวดที่ 6 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานงวดที่ 6 ประจำเดือนมีนาคม 2570 ให้แล้วเสร็จภายใน 182 วัน",
+        "source": {
+          "page": 11,
+          "quote": "ปฏิบัติงานงวดที่ 6 ประจำเดือนมีนาคม 2570 ให้แล้วเสร็จภายใน 182 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": 182,
+        "source": {
+          "page": 11,
+          "quote": "ให้แล้วเสร็จภายใน 182 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 11,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 7",
+        "source": {
+          "page": 11,
+          "quote": "งวดที่ 7 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานงวดที่ 7 ประจำเดือนเมษายน 2570 ให้แล้วเสร็จภายใน 212 วัน",
+        "source": {
+          "page": 11,
+          "quote": "ปฏิบัติงานงวดที่ 7 ประจำเดือนเมษายน 2570 ให้แล้วเสร็จภายใน 212 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": 212,
+        "source": {
+          "page": 11,
+          "quote": "ให้แล้วเสร็จภายใน 212 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 11,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 8",
+        "source": {
+          "page": 12,
+          "quote": "งวดที่ 8 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานงวดที่ 8 ประจำเดือนพฤษภาคม 2570 ให้แล้วเสร็จภายใน 243 วัน",
+        "source": {
+          "page": 12,
+          "quote": "ปฏิบัติงานงวดที่ 8 ประจำเดือนพฤษภาคม 2570 ให้แล้วเสร็จภายใน 243 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": 243,
+        "source": {
+          "page": 12,
+          "quote": "ให้แล้วเสร็จภายใน 243 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 12,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 9",
+        "source": {
+          "page": 12,
+          "quote": "งวดที่ 9 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานงวดที่ 9 ประจำเดือนมิถุนายน 2570 ให้แล้วเสร็จภายใน 273 วัน",
+        "source": {
+          "page": 12,
+          "quote": "ปฏิบัติงานงวดที่ 9 ประจำเดือนมิถุนายน 2570 ให้แล้วเสร็จภายใน 273 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": 273,
+        "source": {
+          "page": 12,
+          "quote": "ให้แล้วเสร็จภายใน 273 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 12,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 10",
+        "source": {
+          "page": 12,
+          "quote": "งวดที่ 10 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานงวดที่ 10 ประจำเดือนกรกฎาคม 2570 ให้แล้วเสร็จภายใน 304 วัน",
+        "source": {
+          "page": 12,
+          "quote": "ปฏิบัติงานงวดที่ 10 ประจำเดือนกรกฎาคม 2570 ให้แล้วเสร็จภายใน 304 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": 304,
+        "source": {
+          "page": 12,
+          "quote": "ให้แล้วเสร็จภายใน 304 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 12,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดที่ 11",
+        "source": {
+          "page": 12,
+          "quote": "งวดที่ 11 เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานงวดที่ 11 ประจำเดือนสิงหาคม 2570 ให้แล้วเสร็จภายใน 335 วัน",
+        "source": {
+          "page": 12,
+          "quote": "ปฏิบัติงานงวดที่ 11 ประจำเดือนสิงหาคม 2570 ให้แล้วเสร็จภายใน 335 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": 335,
+        "source": {
+          "page": 12,
+          "quote": "ให้แล้วเสร็จภายใน 335 วัน"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "payment_percent": {
+        "value": 8.33,
+        "source": {
+          "page": 12,
+          "quote": "เป็นจำนวนเงินในอัตราร้อยละ 8.33 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    },
+    {
+      "phase": {
+        "value": "งวดสุดท้าย",
+        "source": {
+          "page": 12,
+          "quote": "งวดสุดท้าย เป็นจำนวนเงินในอัตราร้อยละ 8.37 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "description": {
+        "value": "ปฏิบัติงานทั้งหมดแล้วเสร็จเรียบร้อยตามสัญญา และ สตง. ได้ตรวจรับมอบงานจ้างเรียบร้อยแล้ว",
+        "source": {
+          "page": 12,
+          "quote": "เมื่อผู้รับจ้างได้ปฏิบัติงานทั้งหมดให้แล้วเสร็จเรียบร้อยตามสัญญา"
+        },
+        "confidence": "high",
+        "reason": null
+      },
+      "days_from_signing": {
+        "value": null,
+        "source": null,
+        "confidence": "low",
+        "reason": "ผูกกับการตรวจรับงานทั้งหมด ไม่ได้ระบุจำนวนวันที่แน่นอน"
+      },
+      "payment_percent": {
+        "value": 8.37,
+        "source": {
+          "page": 12,
+          "quote": "งวดสุดท้าย เป็นจำนวนเงินในอัตราร้อยละ 8.37 ของค่าจ้าง"
+        },
+        "confidence": "high",
+        "reason": null
+      }
+    }
+  ],
+  "penalty": {
+    "rate_percent_per_day": {
+      "value": 0.1,
+      "source": {
+        "page": 12,
+        "quote": "กรณีที่ผู้รับจ้างปฏิบัติผิดสัญญาจ้างนอกเหนือจากข้อ 8.1 จะกำหนดค่าปรับเป็นรายวัน ในอัตราร้อยละ 0.10 ของราคาค่าจ้าง"
+      },
+      "confidence": "high",
+      "reason": null
+    },
+    "cap_percent": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีเพดานค่าปรับระบุในเอกสาร"
+    }
+  },
+  "required_documents": [
+    {
+      "value": "สำเนาหนังสือรับรองการจดทะเบียนนิติบุคคล (กรณีนิติบุคคล)",
+      "source": {
+        "page": 2,
+        "quote": "ให้ยื่นสำเนาหนังสือรับรองการจดทะเบียนนิติบุคคล บัญชีรายชื่อหุ้นส่วนผู้จัดการ"
+      },
+      "confidence": "high",
+      "reason": null
+    },
+    {
+      "value": "สำเนาบัตรประจำตัวประชาชน (กรณีบุคคลธรรมดา)",
+      "source": {
+        "page": 2,
+        "quote": "ให้ยื่นสำเนาบัตรประจำตัวประชาชนของผู้นั้น"
+      },
+      "confidence": "high",
+      "reason": null
+    },
+    {
+      "value": "หลักฐานมูลค่าสุทธิของกิจการหรือทุนจดทะเบียน",
+      "source": {
+        "page": 2,
+        "quote": "ผู้ยื่นข้อเสนอต้องแสดงหลักฐานเกี่ยวกับมูลค่าสุทธิของกิจการ"
+      },
+      "confidence": "high",
+      "reason": null
+    },
+    {
+      "value": "สำเนาใบทะเบียนภาษีมูลค่าเพิ่ม (ถ้ามี)",
+      "source": {
+        "page": 7,
+        "quote": "สำเนาใบทะเบียนภาษีมูลค่าเพิ่ม (ถ้ามี)"
+      },
+      "confidence": "high",
+      "reason": null
+    },
+    {
+      "value": "สำเนาหนังสือรับรองผลงานจ้างตามขอบเขตของงาน",
+      "source": {
+        "page": 7,
+        "quote": "สำเนาหนังสือรับรองผลงานจ้างตามขอบเขตของงาน ข้อ 3.12"
+      },
+      "confidence": "high",
+      "reason": null
+    },
+    {
+      "value": "สำเนาใบขึ้นทะเบียนผู้ประกอบการวิสาหกิจขนาดกลางและขนาดย่อม (SMEs) (ถ้ามี)",
+      "source": {
+        "page": 7,
+        "quote": "สำเนาใบขึ้นทะเบียนผู้ประกอบการวิสาหกิจขนาดกลางและขนาดย่อม (SMEs) (ถ้ามี)"
+      },
+      "confidence": "high",
+      "reason": null
+    }
+  ],
+  "evaluation_criteria": {
+    "method": {
+      "value": "ราคา",
+      "source": {
+        "page": 9,
+        "quote": "จะพิจารณาตัดสินโดยใช้ หลักเกณฑ์ราคา"
+      },
+      "confidence": "high",
+      "reason": null
+    },
+    "price_weight": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ใช้เกณฑ์ราคาล้วน ไม่ได้ระบุเป็นสัดส่วนน้ำหนัก %"
+    },
+    "technical_weight": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ใช้เกณฑ์ราคาล้วน ไม่มีเกณฑ์เทคนิค"
+    },
+    "sub_criteria": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่มีข้อมูลในเอกสาร"
+    }
+  },
+  "risk_flags": [],
+  "contact": {
+    "name_redacted": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่พบข้อมูลติดต่อในเอกสาร"
+    },
+    "department": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่พบข้อมูลติดต่อในเอกสาร"
+    },
+    "phone": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่พบข้อมูลติดต่อในเอกสาร"
+    },
+    "email": {
+      "value": null,
+      "source": null,
+      "confidence": "low",
+      "reason": "ไม่พบข้อมูลติดต่อในเอกสาร"
+    }
+  }
+}

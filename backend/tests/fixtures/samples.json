@@ -1,0 +1,60 @@
+{
+  "samples": [
+    {
+      "id": "tor_2400",
+      "url": "https://interapp4.rd.go.th/TPW/upload/Tor_2400_main.pdf",
+      "content_length": 116003,
+      "source": "Revenue Department (กรมสรรพากร) - interapp4.rd.go.th/TPW/",
+      "pinned_at": "2026-08-28",
+      "used_in_eval": true,
+      "note": "Short (1-page) e-bidding announcement -- procuring 46 cleaning staff, FY2569. Good boundary case: most schema fields will legitimately be null/not-found."
+    },
+    {
+      "id": "tor_2733",
+      "url": "https://interapp4.rd.go.th/TPW/upload/Tor_2733_main.pdf",
+      "content_length": 180969,
+      "source": "Revenue Department (กรมสรรพากร) - interapp4.rd.go.th/TPW/",
+      "pinned_at": "2026-09-02",
+      "used_in_eval": true,
+      "note": "Full 14-page e-bidding document -- cleaning + garden maintenance staff (6 positions), FY2570. Clean text, no font/ToUnicode issues at all."
+    },
+    {
+      "id": "audit_26394_bidding",
+      "url": "https://www.audit.go.th/sites/default/files/files/purchase/%E0%B9%80%E0%B8%AD%E0%B8%81%E0%B8%AA%E0%B8%B2%E0%B8%A3%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%A7%E0%B8%94%E0%B8%A3%E0%B8%B2%E0%B8%84%E0%B8%B2%E0%B8%88%E0%B9%89%E0%B8%B2%E0%B8%87%E0%B9%80%E0%B8%AB%E0%B8%A1%E0%B8%B2%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%97%E0%B8%B3%E0%B8%84%E0%B8%A7%E0%B8%B2%E0%B8%A1%E0%B8%AA%E0%B8%B0%E0%B8%AD%E0%B8%B2%E0%B8%94%20%E0%B8%AF%20%E0%B9%80%E0%B8%A5%E0%B8%82%E0%B8%97%E0%B8%B5%E0%B9%88%20001-2570.pdf",
+      "content_length": 197282,
+      "source": "Office of the Auditor General (สำนักงานการตรวจเงินแผ่นดิน) - audit.go.th/node/26394",
+      "pinned_at": "2026-09-02",
+      "min_delay_seconds": 10,
+      "used_in_eval": true,
+      "note": "audit.go.th robots.txt sets Crawl-delay: 10 -- wait at least 10s after the previous request before fetching this one. Full comprehensive bidding document (bonds, evaluation criteria, deliverables) -- cleaning services contract, FY2570. Different agency from the other two samples."
+    },
+    {
+      "id": "post_8000",
+      "url": "https://interapp4.rd.go.th/TPW/upload/Post_8000_main.pdf",
+      "content_length": 169046,
+      "source": "Revenue Department (กรมสรรพากร) - interapp4.rd.go.th/TPW/",
+      "pinned_at": "2026-08-28",
+      "used_in_eval": false,
+      "note": "Verified scanned-only (usable_text_ratio=0%) on fetch -- excluded from eval scoring (no expected/*.json authored). Kept here so this finding isn't rediscovered by re-fetching it. Proves file size alone is not a valid text/scanned heuristic (169 KB, same ballpark as the usable samples)."
+    },
+    {
+      "id": "post_7000",
+      "url": "https://interapp4.rd.go.th/TPW/upload/Post_7000_main.pdf",
+      "content_length": 65840,
+      "source": "Revenue Department (กรมสรรพากร) - interapp4.rd.go.th/TPW/",
+      "pinned_at": "2026-08-28",
+      "used_in_eval": false,
+      "note": "Verified usable_text_ratio=100% but text is garbage: embedded font is tagged 'Helvetica' with no /ToUnicode CMap, so extracted glyphs are scrambled ASCII, not real Thai. Excluded from eval scoring (no expected/*.json authored). Kept here so this finding isn't rediscovered by re-fetching it. NOTE: neither usable_text_ratio nor the /ToUnicode font check catches this reliably (see fetch_samples.py) -- only caught by manually reading the extracted text."
+    },
+    {
+      "id": "audit_26394_tor",
+      "url": "https://www.audit.go.th/sites/default/files/files/purchase/%E0%B8%82%E0%B8%AD%E0%B8%9A%E0%B9%80%E0%B8%82%E0%B8%95%E0%B8%82%E0%B8%AD%E0%B8%87%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B8%88%E0%B9%89%E0%B8%B2%E0%B8%87%E0%B9%80%E0%B8%AB%E0%B8%A1%E0%B8%B2%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%97%E0%B8%B3%E0%B8%84%E0%B8%A7%E0%B8%B2%E0%B8%A1%E0%B8%AA%E0%B8%B0%E0%B8%AD%E0%B8%B2%E0%B8%94%E0%B8%AA%E0%B8%B3%E0%B8%99%E0%B8%B1%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%95%E0%B8%A3%E0%B8%A7%E0%B8%88%E0%B9%80%E0%B8%87%E0%B8%B4%E0%B8%99%E0%B9%81%E0%B8%9C%E0%B9%88%E0%B8%99%E0%B8%94%E0%B8%B4%E0%B8%99_0.pdf",
+      "content_length": 272027,
+      "source": "Office of the Auditor General (สำนักงานการตรวจเงินแผ่นดิน) - audit.go.th/node/26394",
+      "pinned_at": "2026-09-02",
+      "min_delay_seconds": 10,
+      "used_in_eval": false,
+      "note": "audit.go.th robots.txt sets Crawl-delay: 10. Verified clean, readable text -- not excluded for quality, just redundant: same underlying procurement case as audit_26394_bidding, which is the fuller document (bonds/evaluation criteria included). Kept as a spare fixture."
+    }
+  ]
+}
