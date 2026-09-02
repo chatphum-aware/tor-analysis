@@ -162,8 +162,8 @@ class RiskFlag(BaseModel):
 class ExtractionUsage(BaseModel):
     input_tokens: int
     output_tokens: int
-    cache_creation_input_tokens: int
-    cache_read_input_tokens: int
+    cache_write_tokens: int  # 0 on providers without prompt caching
+    cached_read_tokens: int  # 0 on providers that don't report cache hits
 
 
 class ExtractionCost(BaseModel):
@@ -183,6 +183,7 @@ class ExtractionMeta(BaseModel):
     page_count: int
     usable_text_page_ratio: float  # from scanned.DocumentScanReport
     image_only_pages: list[int]
+    provider: str
     model: str
     pricing_as_of: str
     extracted_at: datetime

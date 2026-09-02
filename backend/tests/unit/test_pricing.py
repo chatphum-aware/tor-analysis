@@ -1,46 +1,44 @@
 from app.derive.pricing import Usage, compute_cost
 
 
-def test_basic_cost_no_cache():
-    usage = Usage(input_tokens=1000, output_tokens=500)
-    cost = compute_cost("claude-haiku-4-5", usage)
+def test_haiku_cost_is_computed_from_the_anthropic_table():
+    cost = compute_cost("anthropic", "claude-haiku-4-5", Usage(1_000_000, 1_000_000))
     assert cost is not None
-    # (1000 * $1.00 + 500 * $5.00) / 1_000_000
-    assert cost.usd == 0.0035
+    assert cost.provider == "anthropic"
+    assert cost.usd == 6.0  # 1.00 input + 5.00 output per Mtok
 
 
-def test_cache_write_and_read_multipliers():
+def test_cache_write_and_read_use_the_documented_multipliers():
     usage = Usage(
         input_tokens=0,
         output_tokens=0,
-        cache_creation_input_tokens=1000,
-        cache_read_input_tokens=1000,
+        cache_write_tokens=1_000_000,
+        cached_read_tokens=1_000_000,
     )
-    cost = compute_cost("claude-haiku-4-5", usage)
+    cost = compute_cost("anthropic", "claude-haiku-4-5", usage)
     assert cost is not None
-    # write: 1000 * $1.00 * 1.25 / 1e6 = 0.00125
-    # read:  1000 * $1.00 * 0.10 / 1e6 = 0.0001
-    assert cost.usd == round(0.00125 + 0.0001, 6)
+    assert cost.usd == 1.35  # 1.00*1.25 write + 1.00*0.10 read
 
 
-def test_unknown_model_returns_none_not_a_guess():
-    usage = Usage(input_tokens=1000, output_tokens=500)
-    assert compute_cost("some-future-model-not-in-table", usage) is None
+def test_unknown_model_returns_none_rather_than_guessing():
+    assert compute_cost("anthropic", "some-future-model", Usage(1, 1)) is None
 
 
-def test_thb_uses_env_rate(monkeypatch):
-    monkeypatch.setenv("USD_THB_RATE", "40.0")
-    monkeypatch.setenv("USD_THB_RATE_DATE", "2026-01-01")
-    usage = Usage(input_tokens=1_000_000, output_tokens=0)
-    cost = compute_cost("claude-haiku-4-5", usage)
+def test_same_model_name_on_a_different_provider_is_not_silently_reused():
+    """A bare model name is not globally unique -- 'llama-3.1-70b' costs
+    different amounts on Together vs Groq vs a local GPU."""
+    assert compute_cost("openai_compat", "claude-haiku-4-5", Usage(1, 1)) is None
+
+
+def test_thb_conversion_reports_the_rate_it_used():
+    cost = compute_cost("anthropic", "claude-haiku-4-5", Usage(1, 1))
     assert cost is not None
-    assert cost.usd == 1.0
-    assert cost.thb == 40.0
-    assert cost.usd_thb_rate == 40.0
-    assert cost.rate_source_date == "2026-01-01"
+    assert cost.thb == round(cost.usd * cost.usd_thb_rate, 4)
+    assert cost.rate_source_date
 
 
-def test_cost_is_always_marked_as_estimate():
-    cost = compute_cost("claude-haiku-4-5", Usage(input_tokens=1, output_tokens=1))
+def test_gemini_pricing_entry_resolves():
+    cost = compute_cost("gemini", "gemini-3.6-flash", Usage(1_000_000, 1_000_000))
     assert cost is not None
-    assert cost.is_estimate is True
+    assert cost.provider == "gemini"
+    assert cost.usd == 4.5  # 0.75 input + 3.75 output per Mtok

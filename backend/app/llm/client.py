@@ -17,15 +17,29 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from typing import Callable
 
-import anthropic
 from pydantic import BaseModel, ValidationError
 
 from app.derive.pricing import Usage
 from app.llm.groups import SHARED_RULES, FieldGroup
+from app.llm.providers.base import LLMProvider, SystemBlock
 from app.models.schema import TORDocumentExtracted
 
 MAX_TOKENS = 8_000  # per group call -- each group covers a small schema slice
+# Confirmed live (2026-09-02) that this is NOT a safe universal default for
+# reasoning models accessed via the openai_compat provider: openai/gpt-oss-120b
+# on Groq produced a very long, coherent chain-of-thought for the 5-field
+# `misc` group that consumed the entire 8000-token budget before ever
+# emitting the final JSON -- a hard truncation (output_parse_failed), not a
+# schema-enforcement failure (the same model passed the openai_compat
+# capability probe cleanly with enough budget). Same underlying phenomenon
+# as Gemini's thinking tokens (see gemini_provider.py), just more verbose
+# for this particular model. Not raised here as a shared default because
+# there's no evidence Anthropic or OpenAI's own models need it -- if a
+# reasoning-heavy openai_compat model is used routinely, that model likely
+# needs its own larger MAX_TOKENS, which argues for a per-provider (or
+# per-group) token budget rather than raising the global default blindly.
 MAX_RETRIES = 1  # rule #5: retry once on validation failure, then error clearly
 
 
@@ -42,7 +56,7 @@ class ExtractionRunResult:
 
 
 def _extract_one_group(
-    client: "anthropic.Anthropic",
+    provider: LLMProvider,
     *,
     document_text: str,
     model: str,
@@ -62,39 +76,35 @@ def _extract_one_group(
                 f"{group.instruction}\n\n"
                 f"ความพยายามครั้งก่อนตอบผิดพลาด ต้องแก้ไขให้ตรงตาม schema ในครั้งนี้:\n{last_error}"
             )
-        system = [
-            {"type": "text", "text": SHARED_RULES, "cache_control": {"type": "ephemeral"}},
-            {"type": "text", "text": document_text, "cache_control": {"type": "ephemeral"}},
-            {"type": "text", "text": instruction},  # NOT cached -- varies per group and per retry
+        system_blocks = [
+            SystemBlock(text=SHARED_RULES, cacheable=True),
+            SystemBlock(text=document_text, cacheable=True),
+            SystemBlock(text=instruction, cacheable=False),
         ]
 
         started = time.monotonic()
         try:
-            with client.messages.stream(
+            result = provider.complete_structured(
+                system_blocks=system_blocks,
+                user_message=(
+                    f"สกัดข้อมูลกลุ่ม '{group.name}' ตาม schema จากเอกสารข้างต้นให้ครบทุกฟิลด์"
+                ),
+                schema=group.schema,
                 model=model,
                 max_tokens=MAX_TOKENS,
-                system=system,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": f"สกัดข้อมูลกลุ่ม '{group.name}' ตาม schema จากเอกสารข้างต้นให้ครบทุกฟิลด์",
-                    }
-                ],
-                output_format=group.schema,
-            ) as stream:
-                response = stream.get_final_message()
+            )
         except ValidationError as exc:
             last_error = exc
             continue
 
         duration_ms = int((time.monotonic() - started) * 1000)
         usage = Usage(
-            input_tokens=response.usage.input_tokens,
-            output_tokens=response.usage.output_tokens,
-            cache_creation_input_tokens=getattr(response.usage, "cache_creation_input_tokens", 0) or 0,
-            cache_read_input_tokens=getattr(response.usage, "cache_read_input_tokens", 0) or 0,
+            input_tokens=result.usage.input_tokens,
+            output_tokens=result.usage.output_tokens,
+            cache_write_tokens=result.usage.cache_write_tokens,
+            cached_read_tokens=result.usage.cached_read_tokens,
         )
-        return response.parsed_output, usage, duration_ms
+        return result.parsed, usage, duration_ms
 
     raise ExtractionValidationError(
         f"group '{group.name}' failed validation on {MAX_RETRIES + 1} attempts; "
@@ -105,26 +115,49 @@ def _extract_one_group(
 def extract(
     *,
     document_text: str,
-    api_key: str,
+    provider: LLMProvider,
     model: str,
     groups: list[FieldGroup],
+    provider_for: Callable[[str, str], LLMProvider] | None = None,
 ) -> ExtractionRunResult:
-    client = anthropic.Anthropic(api_key=api_key)
-
+    """`provider_for` resolves a group's override (name, model) to a provider
+    instance. Required only if some group sets `provider`; a plain
+    single-provider run can omit it (see Task 5's per-group override).
+    Takes the model too, not just the provider name -- an openai_compat
+    override needs the actual model to run its construction-time capability
+    probe against (probing a placeholder model name 404s)."""
     merged: dict = {}
     total_usage = Usage(0, 0, 0, 0)
     total_duration_ms = 0
+    models_used: set[str] = set()
 
     for group in groups:
+        group_model = group.model or model
+        group_provider = provider
+        if group.provider is not None:
+            if provider_for is None:
+                raise ExtractionValidationError(
+                    f"group '{group.name}' overrides provider to '{group.provider}' but no "
+                    f"provider_for resolver was supplied"
+                )
+            group_provider = provider_for(group.provider, group_model)
+        models_used.add(f"{group_provider.name}/{group_model}")
+
         parsed, usage, duration_ms = _extract_one_group(
-            client, document_text=document_text, model=model, group=group
+            group_provider, document_text=document_text, model=group_model, group=group
         )
         merged.update(parsed.model_dump())
         total_usage.input_tokens += usage.input_tokens
         total_usage.output_tokens += usage.output_tokens
-        total_usage.cache_creation_input_tokens += usage.cache_creation_input_tokens
-        total_usage.cache_read_input_tokens += usage.cache_read_input_tokens
+        total_usage.cache_write_tokens += usage.cache_write_tokens
+        total_usage.cached_read_tokens += usage.cached_read_tokens
         total_duration_ms += duration_ms
 
     document = TORDocumentExtracted.model_validate(merged)
-    return ExtractionRunResult(document=document, usage=total_usage, duration_ms=total_duration_ms, model=model)
+    # If every group used the same provider/model, report it plainly; a mixed
+    # run (per-group override in play) is labelled honestly rather than
+    # misreporting the document-level default as if it applied everywhere.
+    reported_model = model if len(models_used) <= 1 else ",".join(sorted(models_used))
+    return ExtractionRunResult(
+        document=document, usage=total_usage, duration_ms=total_duration_ms, model=reported_model
+    )

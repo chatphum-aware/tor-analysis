@@ -95,8 +95,8 @@ export interface RiskFlag {
 export interface ExtractionUsage {
   input_tokens: number;
   output_tokens: number;
-  cache_creation_input_tokens: number;
-  cache_read_input_tokens: number;
+  cache_write_tokens: number;
+  cached_read_tokens: number;
 }
 
 export interface ExtractionCost {
@@ -111,6 +111,7 @@ export interface ExtractionMeta {
   page_count: number;
   usable_text_page_ratio: number;
   image_only_pages: number[];
+  provider: string;
   model: string;
   pricing_as_of: string;
   extracted_at: string;

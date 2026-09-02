@@ -9,14 +9,15 @@ from __future__ import annotations
 
 import asyncio
 
-import anthropic
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
 
-from app.config import load_config
+from app.config import api_key_for_provider, load_config
 from app.derive.calculations import assemble_document
 from app.llm.client import ExtractionValidationError, extract as llm_extract
-from app.llm.groups import FIELD_GROUPS
+from app.llm.groups import FIELD_GROUPS, apply_group_overrides
+from app.llm.providers.base import ProviderAPIError, ProviderAuthError, ProviderRateLimitError
+from app.llm.providers.registry import get_provider
 from app.models.schema import TORDocument
 from app.pdf.extract import build_document_text, extract_document_from_bytes
 
@@ -26,9 +27,10 @@ router = APIRouter()
 @router.post("/api/extract", response_model=TORDocument)
 async def extract_endpoint(file: UploadFile = File(...)) -> TORDocument:
     config = load_config()
-    if not config.anthropic_api_key:
+    if not config.api_key:
         raise HTTPException(
-            status_code=500, detail="ANTHROPIC_API_KEY ไม่ได้ตั้งค่าไว้บนเซิร์ฟเวอร์"
+            status_code=500,
+            detail=f"ยังไม่ได้ตั้งค่า API key ของ provider '{config.provider}' บนเซิร์ฟเวอร์",
         )
 
     max_bytes = config.max_upload_mb * 1024 * 1024
@@ -56,6 +58,16 @@ async def extract_endpoint(file: UploadFile = File(...)) -> TORDocument:
 
     document_text = build_document_text(result.blocks)
 
+    groups = apply_group_overrides(FIELD_GROUPS, config.group_overrides)
+
+    def _provider_for(name: str, override_model: str):
+        # An override's base_url only applies when it names the SAME
+        # provider as the document default (e.g. a local openai_compat
+        # endpoint overriding one group's model); a different provider
+        # gets its own key but no base_url override.
+        base_url = config.provider_base_url if name == config.provider else None
+        return get_provider(name, api_key=api_key_for_provider(name), base_url=base_url, model=override_model)
+
     try:
         # llm_extract is a blocking (sync) call chain -- offload to a worker
         # thread so the event loop stays responsive, and cap wall time so a
@@ -68,9 +80,15 @@ async def extract_endpoint(file: UploadFile = File(...)) -> TORDocument:
             run_in_threadpool(
                 llm_extract,
                 document_text=document_text,
-                api_key=config.anthropic_api_key,
+                provider=get_provider(
+                    config.provider,
+                    api_key=config.api_key,
+                    base_url=config.provider_base_url,
+                    model=config.model,
+                ),
                 model=config.model,
-                groups=FIELD_GROUPS,
+                groups=groups,
+                provider_for=_provider_for,
             ),
             timeout=config.extraction_timeout_seconds,
         )
@@ -80,18 +98,21 @@ async def extract_endpoint(file: UploadFile = File(...)) -> TORDocument:
         ) from None
     except ExtractionValidationError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from None
-    except anthropic.AuthenticationError:
-        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY ไม่ถูกต้อง") from None
-    except anthropic.RateLimitError:
+    except ProviderAuthError:
         raise HTTPException(
-            status_code=429, detail="ถูกจำกัดอัตราการเรียก Claude API ลองใหม่อีกสักครู่"
+            status_code=500, detail=f"API key ของ provider '{config.provider}' ไม่ถูกต้อง"
         ) from None
-    except anthropic.APIStatusError as exc:
-        raise HTTPException(status_code=502, detail=f"Claude API error: {exc.message}") from None
+    except ProviderRateLimitError:
+        raise HTTPException(
+            status_code=429, detail="ถูกจำกัดอัตราการเรียก API ลองใหม่อีกสักครู่"
+        ) from None
+    except ProviderAPIError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from None
 
     return assemble_document(
         run.document,
         scan_report=report,
+        provider=config.provider,
         model=run.model,
         usage=run.usage,
         duration_ms=run.duration_ms,

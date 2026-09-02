@@ -35,7 +35,7 @@ decision rather than done speculatively.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Type
 
@@ -58,6 +58,12 @@ class FieldGroup:
     name: str
     schema: Type[BaseModel]
     instruction: str  # appended as the final, non-cached system block
+    # Optional per-group override. Set when a group needs a different
+    # provider/model than the document default -- eval showed cheap models
+    # break the source/null rules on the list-heavy groups while handling the
+    # flat ones fine. None means "use the document default".
+    provider: str | None = None
+    model: str | None = None
 
 
 def _load(filename: str) -> str:
@@ -75,3 +81,21 @@ FIELD_GROUPS: list[FieldGroup] = [
     FieldGroup("deliverables", DeliverablesGroup, _load("group_deliverables.md")),
     FieldGroup("misc", MiscGroup, _load("group_misc.md")),
 ]
+
+
+def apply_group_overrides(
+    groups: list[FieldGroup], overrides: dict[str, tuple[str, str]]
+) -> list[FieldGroup]:
+    """Return a new list with each group's provider/model swapped in from
+    `overrides` (keyed by group name, e.g. Config.group_overrides). Groups
+    not named in `overrides` are returned unchanged. `FieldGroup` is frozen,
+    so this builds new instances rather than mutating in place."""
+    result = []
+    for group in groups:
+        override = overrides.get(group.name)
+        if override is None:
+            result.append(group)
+        else:
+            provider, model = override
+            result.append(replace(group, provider=provider, model=model))
+    return result

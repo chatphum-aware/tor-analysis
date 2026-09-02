@@ -25,7 +25,7 @@ def test_extract_without_api_key_returns_500(monkeypatch):
         "/api/extract", files={"file": ("test.pdf", b"%PDF-1.4 fake", "application/pdf")}
     )
     assert resp.status_code == 500
-    assert "ANTHROPIC_API_KEY" in resp.json()["detail"]
+    assert "anthropic" in resp.json()["detail"]
 
 
 def test_extract_empty_file_returns_400(monkeypatch):
@@ -79,6 +79,7 @@ def test_export_csv_returns_csv_content_type():
     doc = assemble_document(
         extracted,
         scan_report=scan_report,
+        provider="anthropic",
         model="claude-haiku-4-5",
         usage=Usage(input_tokens=1, output_tokens=1),
         duration_ms=1,
@@ -87,3 +88,15 @@ def test_export_csv_returns_csv_content_type():
     assert resp.status_code == 200
     assert resp.headers["content-type"].startswith("text/csv")
     assert "project_name" in resp.text
+
+
+def test_extraction_usage_json_keys_are_provider_neutral():
+    """These key names are the public API contract and are mirrored by hand in
+    frontend/src/types/schema.ts (there is no codegen). Anthropic's own field
+    names must not leak into a provider-neutral response."""
+    from app.models.schema import ExtractionUsage
+
+    keys = set(ExtractionUsage(
+        input_tokens=1, output_tokens=2, cache_write_tokens=3, cached_read_tokens=4
+    ).model_dump().keys())
+    assert keys == {"input_tokens", "output_tokens", "cache_write_tokens", "cached_read_tokens"}

@@ -53,11 +53,12 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from app.config import load_config
+from app.config import api_key_for_provider, load_config
 from app.derive.calculations import assemble_document
 from app.derive.pricing import Cost, Usage, compute_cost
 from app.llm.client import ExtractionValidationError, extract
-from app.llm.groups import FIELD_GROUPS
+from app.llm.providers.registry import get_provider
+from app.llm.groups import FIELD_GROUPS, apply_group_overrides
 from app.pdf.extract import build_document_text, extract_document
 
 EXPECTED_DIR = Path(__file__).resolve().parents[2] / "tests" / "expected"
@@ -288,9 +289,15 @@ def main(argv: list[str] | None = None) -> int:
 
     config = load_config()
     model = args.model or config.model
-    if not config.anthropic_api_key:
-        print("error: ANTHROPIC_API_KEY is not set", file=sys.stderr)
+    if not config.api_key:
+        print(f"error: no API key set for provider '{config.provider}'", file=sys.stderr)
         return 1
+    provider = get_provider(config.provider, api_key=config.api_key, base_url=config.provider_base_url, model=model)
+    groups = apply_group_overrides(FIELD_GROUPS, config.group_overrides)
+
+    def _provider_for(name: str, override_model: str):
+        base_url = config.provider_base_url if name == config.provider else None
+        return get_provider(name, api_key=api_key_for_provider(name), base_url=base_url, model=override_model)
 
     expected_files = sorted(EXPECTED_DIR.glob("*.json"))
     if not expected_files:
@@ -318,9 +325,10 @@ def main(argv: list[str] | None = None) -> int:
         try:
             run = extract(
                 document_text=document_text,
-                api_key=config.anthropic_api_key,
+                provider=provider,
                 model=model,
-                groups=FIELD_GROUPS,
+                groups=groups,
+                provider_for=_provider_for,
             )
         except ExtractionValidationError as exc:
             print(f"  ERROR: {sample_id} failed extraction: {exc}", file=sys.stderr)
@@ -329,6 +337,7 @@ def main(argv: list[str] | None = None) -> int:
         doc = assemble_document(
             run.document,
             scan_report=result.scan_report,
+            provider=config.provider,
             model=run.model,
             usage=run.usage,
             duration_ms=run.duration_ms,
@@ -346,15 +355,15 @@ def main(argv: list[str] | None = None) -> int:
 
         total_usage.input_tokens += run.usage.input_tokens
         total_usage.output_tokens += run.usage.output_tokens
-        total_usage.cache_creation_input_tokens += run.usage.cache_creation_input_tokens
-        total_usage.cache_read_input_tokens += run.usage.cache_read_input_tokens
+        total_usage.cache_write_tokens += run.usage.cache_write_tokens
+        total_usage.cached_read_tokens += run.usage.cached_read_tokens
         scored += 1
 
     if scored == 0:
         print("error: nothing was scored", file=sys.stderr)
         return 1
 
-    total_cost = compute_cost(model, total_usage)
+    total_cost = compute_cost(config.provider, model, total_usage)
     report = render_markdown(total_tallies, scored, total_cost, risk_flag_counts, all_mismatches)
     print()
     print(report)

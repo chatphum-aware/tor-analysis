@@ -15,6 +15,7 @@ def _build_doc():
     return assemble_document(
         extracted,
         scan_report=scan_report,
+        provider="anthropic",
         model="claude-haiku-4-5",
         usage=Usage(input_tokens=10, output_tokens=10),
         duration_ms=1,

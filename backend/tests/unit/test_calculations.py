@@ -123,11 +123,12 @@ def test_assemble_document_end_to_end():
             PageReport(page_number=2, status="image_only", text_char_count=0, image_coverage_ratio=0.9),
         ],
     )
-    usage = Usage(input_tokens=1000, output_tokens=200, cache_creation_input_tokens=1000, cache_read_input_tokens=0)
+    usage = Usage(input_tokens=1000, output_tokens=200, cache_write_tokens=1000, cached_read_tokens=0)
 
     doc = assemble_document(
         extracted,
         scan_report=scan_report,
+        provider="anthropic",
         model="claude-haiku-4-5",
         usage=usage,
         duration_ms=1234,

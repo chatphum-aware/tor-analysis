@@ -88,6 +88,7 @@ def assemble_document(
     extracted: TORDocumentExtracted,
     *,
     scan_report: DocumentScanReport,
+    provider: str,
     model: str,
     usage: Usage,
     duration_ms: int,
@@ -105,14 +106,15 @@ def assemble_document(
         if flag:
             derived_flags.append(flag)
 
-    cost: Cost | None = compute_cost(model, usage)
+    cost: Cost | None = compute_cost(provider, model, usage)
     if cost is None:
-        # rule: never guess a price for a model we don't have pricing for
+        # rule: never guess a price for a (provider, model) we don't have pricing for
         cost = Cost(
             usd=0.0,
             thb=0.0,
             usd_thb_rate=0.0,
             rate_source_date="",
+            provider=provider,
             model=model,
             pricing_as_of="unknown",
             is_estimate=True,
@@ -144,6 +146,7 @@ def assemble_document(
             page_count=scan_report.page_count,
             usable_text_page_ratio=round(scan_report.usable_text_ratio, 4),
             image_only_pages=[p.page_number for p in scan_report.pages if p.status == "image_only"],
+            provider=provider,
             model=model,
             pricing_as_of=cost.pricing_as_of,
             extracted_at=extracted_at or datetime.now(),
@@ -151,8 +154,8 @@ def assemble_document(
             usage=ExtractionUsage(
                 input_tokens=usage.input_tokens,
                 output_tokens=usage.output_tokens,
-                cache_creation_input_tokens=usage.cache_creation_input_tokens,
-                cache_read_input_tokens=usage.cache_read_input_tokens,
+                cache_write_tokens=usage.cache_write_tokens,
+                cached_read_tokens=usage.cached_read_tokens,
             ),
             cost=ExtractionCost(
                 usd=cost.usd,

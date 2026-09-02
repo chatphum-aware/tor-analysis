@@ -14,12 +14,12 @@ import json
 import sys
 from pathlib import Path
 
-import anthropic
-
-from app.config import load_config
+from app.config import api_key_for_provider, load_config
 from app.derive.calculations import assemble_document
 from app.llm.client import ExtractionValidationError, extract
-from app.llm.groups import FIELD_GROUPS
+from app.llm.groups import FIELD_GROUPS, apply_group_overrides
+from app.llm.providers.base import ProviderAPIError, ProviderAuthError, ProviderRateLimitError
+from app.llm.providers.registry import get_provider
 from app.pdf.extract import build_document_text, extract_document
 
 OUTPUTS_DIR = Path(__file__).resolve().parent.parent / "outputs"
@@ -34,10 +34,10 @@ def main(argv: list[str] | None = None) -> int:
     config = load_config()
     model = args.model or config.model
 
-    if not config.anthropic_api_key:
+    if not config.api_key:
         print(
-            "error: ANTHROPIC_API_KEY is not set. Export it or put it in backend/.env "
-            "(see .env.example).",
+            f"error: no API key set for provider '{config.provider}'. Export it or put it "
+            f"in backend/.env (see .env.example).",
             file=sys.stderr,
         )
         return 1
@@ -63,29 +63,41 @@ def main(argv: list[str] | None = None) -> int:
 
     document_text = build_document_text(result.blocks)
 
+    provider = get_provider(config.provider, api_key=config.api_key, base_url=config.provider_base_url, model=model)
+    groups = apply_group_overrides(FIELD_GROUPS, config.group_overrides)
+
+    def _provider_for(name: str, override_model: str):
+        base_url = config.provider_base_url if name == config.provider else None
+        return get_provider(name, api_key=api_key_for_provider(name), base_url=base_url, model=override_model)
+
     try:
         run = extract(
             document_text=document_text,
-            api_key=config.anthropic_api_key,
+            provider=provider,
             model=model,
-            groups=FIELD_GROUPS,
+            groups=groups,
+            provider_for=_provider_for,
         )
     except ExtractionValidationError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
-    except anthropic.AuthenticationError:
-        print("error: ANTHROPIC_API_KEY ไม่ถูกต้อง (401) — ตรวจสอบ key อีกครั้ง", file=sys.stderr)
+    except ProviderAuthError:
+        print(
+            f"error: API key for provider '{config.provider}' is invalid — check it again",
+            file=sys.stderr,
+        )
         return 1
-    except anthropic.RateLimitError as exc:
-        print(f"error: rate limited (429) — {exc}", file=sys.stderr)
+    except ProviderRateLimitError as exc:
+        print(f"error: rate limited — {exc}", file=sys.stderr)
         return 1
-    except anthropic.APIStatusError as exc:
-        print(f"error: Claude API error ({exc.status_code}) — {exc.message}", file=sys.stderr)
+    except ProviderAPIError as exc:
+        print(f"error: provider API error — {exc}", file=sys.stderr)
         return 1
 
     doc = assemble_document(
         run.document,
         scan_report=report,
+        provider=config.provider,
         model=run.model,
         usage=run.usage,
         duration_ms=run.duration_ms,
@@ -110,7 +122,7 @@ def main(argv: list[str] | None = None) -> int:
     u = meta.usage
     print(
         f"  input={u.input_tokens} output={u.output_tokens} "
-        f"cache_write={u.cache_creation_input_tokens} cache_read={u.cache_read_input_tokens}"
+        f"cache_write={u.cache_write_tokens} cache_read={u.cached_read_tokens}"
     )
     print(
         f"  ${meta.cost.usd:.4f} USD (~฿{meta.cost.thb:.2f} @ {meta.cost.usd_thb_rate} "
