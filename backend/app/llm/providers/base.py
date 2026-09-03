@@ -52,6 +52,23 @@ class SystemBlock:
     cacheable: bool = False
 
 
+@dataclass(frozen=True)
+class ImageBlock:
+    """One rendered page image, for a scanned PDF page with no text layer.
+
+    Deliberately a separate type from SystemBlock rather than an image
+    variant of it: every vendor SDK puts images in the USER turn, not the
+    system prompt, so folding them into SystemBlock would describe a shape
+    no adapter could actually send. `page` lets an adapter build a caption
+    ("read page N from this image") without the caller having to pre-format
+    one; `data` is raw bytes -- each adapter base64-encodes it however its
+    own SDK wants."""
+
+    page: int
+    media_type: str  # "image/png" or "image/jpeg"
+    data: bytes
+
+
 @dataclass
 class ProviderUsage:
     input_tokens: int
@@ -65,6 +82,14 @@ class ProviderCapabilities:
     native_structured_output: bool
     prompt_caching: bool
     reports_token_usage: bool
+    # Whether this provider/endpoint can be trusted with image input at all.
+    # Deliberately NOT auto-probed the way native_structured_output is for
+    # openai_compat: a wrong/ignored schema reliably fails validation, so a
+    # probe can detect it -- but an endpoint that silently ignores an image
+    # and answers from the caption text alone produces schema-valid,
+    # plausible-looking output with no way to tell the difference. See
+    # openai_compat_provider.py for how that gap is handled instead.
+    vision_input: bool
 
 
 @dataclass
@@ -82,12 +107,18 @@ class LLMProvider(Protocol):
         self,
         *,
         system_blocks: list[SystemBlock],
+        images: list[ImageBlock],
         user_message: str,
         schema: type[BaseModel],
         model: str,
         max_tokens: int,
     ) -> ProviderResult:
         """Return a schema-valid instance plus token usage.
+
+        `images` is `[]` on every call that isn't reading a scanned PDF page
+        -- callers must check `capabilities.vision_input` before passing a
+        non-empty list (client.py does this once, before running any group,
+        not per-adapter).
 
         Must raise the neutral ProviderError subclasses above -- never a
         vendor SDK exception. Must let pydantic.ValidationError propagate

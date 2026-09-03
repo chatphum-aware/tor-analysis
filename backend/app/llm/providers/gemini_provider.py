@@ -46,6 +46,10 @@ confirmed by reproducing it locally (max_tokens=2000 failed to parse,
 max_tokens=8000, this project's actual MAX_TOKENS, succeeded on the
 identical request).
 
+Vision (added for scanned-PDF support): `types.Part.from_bytes`/`from_text`
+are per the documented SDK API, but this combination has not been run
+against a real scanned page yet -- needs its own live spike.
+
 Caching is deliberately not wired up here: Gemini's prompt caching is an
 explicit server-side CachedContent resource with its own minimum-token
 thresholds and TTL, not an inline marker on a block. This project's cache
@@ -59,9 +63,11 @@ from __future__ import annotations
 
 from google import genai
 from google.genai import errors as genai_errors
+from google.genai import types as genai_types
 from pydantic import BaseModel
 
 from app.llm.providers.base import (
+    ImageBlock,
     ProviderAPIError,
     ProviderAuthError,
     ProviderCapabilities,
@@ -78,6 +84,7 @@ class GeminiProvider:
         native_structured_output=True,
         prompt_caching=False,
         reports_token_usage=True,
+        vision_input=True,
     )
 
     def __init__(self, api_key: str | None) -> None:
@@ -87,16 +94,31 @@ class GeminiProvider:
         self,
         *,
         system_blocks: list[SystemBlock],
+        images: list[ImageBlock],
         user_message: str,
         schema: type[BaseModel],
         model: str,
         max_tokens: int,
     ) -> ProviderResult:
         system_text = "\n\n".join(block.text for block in system_blocks)
+        # NOT yet confirmed by a live call: Google's guidance recommends
+        # image parts before the text part in `contents`, which is the order
+        # built here, but this exact shape hasn't been run against a real
+        # scanned page -- needs its own spike (see module docstring).
+        if images:
+            contents: list[genai_types.Part] | str = []
+            for image in images:
+                contents.append(
+                    genai_types.Part.from_text(text=f"[หน้า {image.page} — ภาพหน้าเอกสารที่สแกน]")
+                )
+                contents.append(genai_types.Part.from_bytes(data=image.data, mime_type=image.media_type))
+            contents.append(genai_types.Part.from_text(text=user_message))
+        else:
+            contents = user_message
         try:
             response = self._client.models.generate_content(
                 model=model,
-                contents=user_message,
+                contents=contents,
                 config={
                     "system_instruction": system_text,
                     "response_mime_type": "application/json",

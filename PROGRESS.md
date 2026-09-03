@@ -2,18 +2,22 @@
 
 ไฟล์นี้มีไว้ให้ Claude (หรือใครก็ตาม) เปิดงานต่อได้ทันทีถ้าเซสชันขาดหรือเครื่องปิดกะทันหัน
 อ่านไฟล์นี้ก่อน แล้วดูแผนเต็มที่ `~/.claude/plans/for-this-project-i-elegant-spring.md`
-(มีเหตุผล/หลักฐานเบื้องหลังการตัดสินใจทุกอย่างละเอียดกว่านี้มาก)
+(multi-provider migration) หรือ `~/.claude/plans/valiant-booping-sloth.md` (multi-format
+ingestion + vision OCR — งานล่าสุด ดูหัวข้อท้ายไฟล์นี้) — ทั้งสองไฟล์มีเหตุผล/หลักฐานเบื้องหลัง
+การตัดสินใจทุกอย่างละเอียดกว่านี้มาก
 
-**อัปเดตล่าสุด:** 2026-09-02
+**อัปเดตล่าสุด:** 2026-09-03
 
 ---
 
 ## สถานะ repo
 
 - **มี commit จริงแล้ว** (ผ่าน `/quick-commit` เท่านั้น ไม่เคย commit ตรงเองเลย):
-  `f716f69` Initial commit -> `5bb5fff` Update README.md -> `cdd4358` Add TOR Analyzer app
-  (backend, frontend, docker config) — commit ล่าสุดคือตอน Step 1-6 (v0.1 หลัก) เสร็จ
-  งาน multi-provider migration (ดูหัวข้อด้านล่าง) **ยังไม่ได้ commit** ตอนเขียนบรรทัดนี้
+  `f716f69` Initial commit -> `5bb5fff` Update README.md -> `cdd4358` Add TOR Analyzer app ->
+  `4992e47` Add LLM provider abstraction (Anthropic/OpenAI/Gemini) -> `502dc31` Fix 10
+  code-review findings in multi-provider pipeline -> `c73c66f` Add DOCX/XLSX ingestion and
+  generalized source citations (Phase 1-4 ของงาน multi-format ingestion — ดูหัวข้อท้ายไฟล์)
+  Phase 5 (vision OCR สำหรับ PDF ที่สแกน) **ยังไม่ได้ commit** ตอนเขียนบรรทัดนี้
   ถ้าเซสชันขาด ให้เช็ค `git log --oneline` และ `git status` ก่อนเสมอว่า commit ไปถึงไหนแล้วจริง ๆ
 - ห้าม commit เองโดยไม่ผ่าน `/quick-commit` ตาม CLAUDE.md ของผู้ใช้
 - มีไฟล์ `doh_root.html` ที่ root — **ไม่ใช่ไฟล์ที่ Claude สร้าง** ดูเหมือนผู้ใช้บันทึกหน้าเว็บ
@@ -338,3 +342,187 @@ Task 9 (cross-provider comparison report) ยังไม่เริ่ม — 
 **ค่าใช้จ่ายจริงที่เกิดขึ้นในเซสชันนี้**: Anthropic live check เล็กน้อย (~$0.05), Gemini/OpenAI-
 compat ทดสอบทั้งหมดผ่าน free tier (Gemini) หรือ credit ที่มีอยู่แล้ว (Groq) — ไม่มีการเสีย
 เงินก้อนใหญ่โดยไม่ถามก่อน ทุกจุดที่มีนัยสำคัญถามผู้ใช้ก่อนเสมอ
+
+## Task 9 (cross-provider comparison report): เสร็จ พบ limitation ที่ 3 ของ Groq/gpt-oss-120b
+
+สร้าง `backend/app/eval/compare_providers.py` (2 โหมด: `--check-schema-ceiling`,
+`--eval`) — พบบั๊ก/finding จริงหลายจุดระหว่างรัน ไม่ใช่แค่เขียนโค้ดผ่าน:
+
+- **บั๊กในเครื่องมือของตัวเอง**: `_CEILING_CHECK_MAX_TOKENS` เดิมตั้งไว้ 512 ต่ำเกินไป
+  ทำให้ `anthropic` (โมเดลที่ไม่ reasoning) ตอบไม่ทันสำหรับ 3/6 กลุ่ม (basic_info, bonds,
+  misc) เพราะ stub document ว่างเปล่าก็ยังต้องเขียน reason ให้ทุก field ที่เป็น null
+  ยิ่งกลุ่มมี field เยอะยิ่งใช้ token เยอะ ไม่เกี่ยวกับ schema ซับซ้อนเลย — แก้เป็น 3000
+  ยืนยันว่า `anthropic` ผ่านครบ 6/6 กลุ่มหลังแก้ (ตรงกับที่ระบบจริงใช้ MAX_TOKENS=8000 อยู่แล้ว)
+- **Finding ที่ 2 ของ `openai/gpt-oss-120b` (ต่างจาก reasoning-budget ที่เจอใน Task 8)**:
+  แม้ budget พอแล้ว (3000) กลุ่ม `bonds`/`misc` ยังพัง แต่ครั้งนี้เป็นเพราะโมเดลตอบ
+  `"reason": null` แทนที่จะเป็นข้อความจริง — ผ่าน JSON schema ได้ (เพราะ required บอกแค่ว่า
+  key ต้องมี ไม่ได้บอกว่าห้าม null) แต่ผิดกฎ #3 ของโปรเจกต์ (null ต้องมี reason จริง)
+  — เป็นช่องว่างเชิงโครงสร้างจริงระหว่าง JSON-schema-level enforcement กับ Pydantic
+  custom validator ของเรา ไม่ใช่สิ่งที่ "แก้" ที่ adapter ได้ เป็นข้อมูลเปรียบเทียบจริงที่
+  เครื่องมือนี้มีไว้เพื่อหาสิ่งนี้เลย
+- **Finding ที่ 3 ของ `openai/gpt-oss-120b`**: รัน `--eval` เต็มรูปแบบ (3 เอกสารจริง) —
+  เอกสารสั้น (`tor_2400`) ผ่าน แต่เอกสารยาว 2 ฉบับ (`audit_26394_bidding`, `tor_2733`)
+  โดน Groq ปฏิเสธด้วย 413 rate_limit_exceeded: on-demand tier จำกัด **8000 token/นาที**
+  แต่ input ของเอกสารพวกนี้ (shared rules + เนื้อเอกสาร + schema) ต้องใช้ 16,486-17,060
+  token ต่อ request เดียว เกิน limit ไปมาก — ไม่ใช่บั๊กโค้ด เป็น account tier limit จริง
+  (error message ของ Groq เองแนะนำให้ upgrade เป็น Dev Tier)
+- **ผลเปรียบเทียบสุดท้าย** (ตาราง markdown เต็มอยู่ใน `docs/plans/2026-09-02-multi-provider-
+  migration.md` Task 9):
+
+  | Provider/Model | Exact | Wrong | Missed | Hallucinated | Crashed docs | Cost |
+  |---|---|---|---|---|---|---|
+  | anthropic/claude-haiku-4-5 | 195 | 15 | 2 | 3 | none | $0.6177 |
+  | openai_compat/openai-gpt-oss-120b | 26 | 0 | 2 | 1 | audit_26394_bidding, tor_2733 | unknown |
+
+  Anthropic ผ่านครบ 3 เอกสารไม่มี crash เลย 195/215 ตรงเป๊ะ (91%) — ดีกว่า baseline เดิม
+  (178/215 ตอน Step 6) เพราะสะสมการแก้ prompt จากหลาย session ก่อนหน้า
+- อัปเดต `README.md` ทั้งสองภาษา: แก้คำที่ผิดแล้ว ("ยังไม่รองรับ provider อื่น" — ตอนนี้รองรับ
+  แล้วจริง ผ่าน unit test ครบ แต่ eval เต็มรูปแบบยังผ่านแค่ anthropic) เพิ่มตาราง env var
+  สำหรับ provider ใหม่ทั้งหมด และย่อหน้าสรุปผล cross-provider comparison
+- **OPENAI_API_KEY/GEMINI_API_KEY หายจาก `.env` ระหว่างเซสชัน** (ผู้ใช้ลบเองหลัง Task 6-7)
+  ทำให้ Task 9 เทียบได้แค่ anthropic + openai_compat เท่านั้น — ถ้าจะเทียบ OpenAI/Gemini
+  ด้วย ต้องเติม key กลับก่อน
+
+### สถานะรวม Task 1-9 (ล่าสุดสุด)
+
+Task 1-5, 9 เสร็จสมบูรณ์. Task 6-8 มี adapter สร้าง+unit test ผ่านครบ แต่ eval เต็มรูปแบบ
+ยังไม่ผ่านทุก provider (ติด billing/quota ของ account ทดสอบเอง ไม่ใช่โค้ด) — ดู checkbox
+ในไฟล์แผนเพื่อความแม่นยำที่สุดเสมอ งานทั้งหมดอยู่ระหว่างตัดสินใจว่าจะ commit ต่อหรือยัง
+
+## เซสชันใหม่: Multi-format ingestion — สแกน PDF (vision OCR), DOCX, XLSX (2026-09-03)
+
+แผนเต็มอยู่ที่ `~/.claude/plans/valiant-booping-sloth.md`. โจทย์: ผู้ใช้อยากให้รองรับ (1)
+PDF ที่เป็นภาพสแกนล้วน (ไม่มี text layer) และ (2) ไฟล์ Word/Excel นอกจาก PDF ตรวจสอบก่อนแล้วว่า
+ไม่มีแผนเก่าเรื่องนี้อยู่เลยในโปรเจกต์ (README/CLAUDE.md แค่บอกว่า "ยังไม่มี OCR" เป็นข้อจำกัด
+ไม่ใช่ของที่วางแผนไว้แล้ว) แบ่งเป็น 5 phase ทำสำเร็จครบทั้งหมด ตามลำดับ: **Source ให้ยืดหยุ่นก่อน
+(behavior-preserving) -> ingest abstraction บน PDF เดิม -> XLSX -> DOCX -> vision OCR** เหตุผลของ
+ลำดับนี้คือให้ของที่เสี่ยงเปลี่ยนแปลงเยอะที่สุดแต่ไม่เปลี่ยน behavior จริงมาก่อน แล้วค่อยเพิ่มความ
+ซับซ้อนทีละอย่าง จบที่ของที่แตะทุก provider adapter พร้อมกัน (เสี่ยงสุด)
+
+### การตัดสินใจหลักที่ผู้ใช้เลือก (ก่อนเริ่มเขียนโค้ด)
+
+1. **OCR ใช้ vision LLM ไม่ใช่ OCR แบบเดิม** (ไม่ใช้ pytesseract/cloud OCR API) — render หน้าที่
+   สแกนเป็นภาพ (PyMuPDF ทำได้ในตัว) แล้วส่งผ่าน pipeline multi-provider ที่มีอยู่แล้ว
+2. **Source ต้องยืดหยุ่นกว่าแค่ "page"** — DOCX/XLSX ไม่มีเลขหน้าจริง (Word แบ่งหน้าตอน render
+   ไม่ใช่ข้อมูลที่เก็บในไฟล์; Excel มี cell ไม่มีหน้า)
+3. **ทำเป็นแผนเดียว ต่อเนื่องกันทั้ง 3 รูปแบบ** ไม่แยกแผนย่อย
+
+### Phase 1 — Source generalization: พบว่าสมมติฐานของแผนผิด แต่แก้ได้เร็วเพราะวัดจริงก่อนเปลี่ยน
+
+ออกแบบ `Source` ใหม่ให้มี `kind` (`text_page`/`vision_page`/`paragraph`/`table_cell_docx`/
+`cell_xlsx`) ตอนแรกให้แต่ละ kind มี field ตำแหน่งของตัวเอง (8 field รวม: page, paragraph_index,
+heading_path, table_index/row/col, sheet, cell) — **live test จริงบน `claude-haiku-4-5` ล้มทันที**
+ที่กลุ่ม `misc`: `400 Schema is too complex for compilation` เพราะ `Source` ถูกอ้างอิงใน
+`Sourced[T]` ทุก leaf (~26 จุด) การเพิ่ม field เข้าไปคูณเข้ากับทุกจุดที่อ้างอิง
+
+วัด byte ของ JSON schema จริงก่อนแก้ (ไม่เดา): schema เดิม 3,789 bytes (`misc`, ผ่าน) ->
+8-field ใหม่ 5,899 bytes (ไม่ผ่าน) หลังผู้ใช้เลือก **ยุบเหลือ `page` + `ref` string เดียว**
+(`"para:12"`, `"t1:r3:c2"`, `"Sheet1!B5"`, regex-validate ตาม kind) ยังได้ 5,518 bytes — เกิน
+คาดเพราะ **สาเหตุจริงไม่ใช่จำนวน field แต่คือ docstring ของ class `Source`** (Pydantic ส่ง
+docstring เข้า JSON schema เป็น `description` field, 1.4KB ของ docstring ซ้ำในทุก group schema
+ที่อ้างอิง `Source`) ย้าย docstring ยาวไปเป็น `#` comment (ไม่เข้า schema) เหลือ 4,142 bytes —
+ผ่านสบาย ทุก group ตอนนี้ ~+353 bytes จาก baseline เท่านั้น **บทเรียนสำคัญ**: model ที่ถูกอ้างอิง
+จากหลาย leaf ต้องระวัง docstring ยาว ไม่ใช่แค่จำนวน field — บันทึกไว้ใน `CLAUDE.md` เป็น trap ใหม่
+
+Live verify (haiku, 1 หน้า, $0.0658): โมเดลตอบ `kind="text_page"` ถูกทุกจุด (10/10 source),
+`ref: null` เสมอ, ไม่มี violation เลย eval ground truth เก่ายังใช้ scoring ได้ (แค่ shape stale
+ไม่ invalid) เพราะ scorer เช็คแค่ key set `{value,source,confidence,reason}` ไม่แตะข้างในของ
+`source` เลย — ยืนยันจาก docstring ของ `run_eval.py` เอง
+
+### Phase 2 — ingest abstraction บน PDF เดิม: พิสูจน์ inert ด้วยวิธีที่ดีกว่าที่แผนขอ
+
+สร้าง `backend/app/ingest/{base,detect,pdf_ingest}.py` เป็น facade บน `app/pdf/*` เดิม (ไม่แก้
+ของเดิมเลย) แผนขอให้รัน eval 3 เอกสารจริง (~$0.62) เพื่อพิสูจน์ว่า refactor ไม่เปลี่ยน behavior
+— **เลือกไม่รันของจริง** ใช้วิธีที่แน่นอนกว่าและฟรีแทน: เทียบ `document_text` แบบ byte-ต่อ-byte
+ระหว่างของเก่ากับ facade ใหม่บน sample จริงทั้ง 6 ไฟล์ **เหมือนกันทุก byte ทุกไฟล์** รวมถึง
+`post_8000.pdf` ที่เป็นไฟล์สแกนล้วน (0 byte text) — เจอไฟล์นี้ตอนทดสอบ กลายเป็น fixture ที่มีค่า
+มากสำหรับ Phase 5 ในตัว (ในเครื่องอยู่แล้ว ไม่ต้องพึ่งไฟล์นอก repo)
+
+### Phase 3 — XLSX: สร้างเสร็จ แต่ปิดไว้เพราะหลักฐานจริงจากผู้ใช้
+
+ทำ `xlsx_ingest.py` ด้วย `openpyxl` (MIT, ตรวจสอบกับ PyPI ก่อนเพิ่ม) จุดสำคัญ: ใช้
+`load_workbook(data_only=True)` อ่านค่า formula ที่ Excel cache ไว้แล้วเท่านั้น **ไม่คำนวณ formula
+เอง** (ตรงกับกฎข้อ 1 — cell สูตรที่ไม่มีค่า cache จะหายไปจาก prompt โมเดลจะตอบ null+reason แทน
+การเดา ยืนยันด้วย unit test) ตอนจะ verify live ผู้ใช้บอกว่า **หา TOR ไทยจริงเป็น .xlsx ไม่เจอเลย**
+(TOR จริงออกจาก e-GP เป็น PDF หรือร่างเป็น DOCX; Excel ที่เจอในงานจัดซื้อจัดจ้างมักเป็นไฟล์แนบ
+เช่น BOQ/ราคากลาง ซึ่งเนื้อหาไม่ตรงกับ schema ของเครื่องมือนี้เลย) — **ตัดสินใจเก็บโค้ดไว้แต่ปิด
+ฟีเจอร์** ด้วย env flag `TOR_ENABLE_XLSX` (default off) ไม่ลบทิ้งเพราะพิสูจน์แล้วว่า ingest layer
+ใช้ได้จริงกับ format ที่ไม่ใช่ PDF ซึ่งลดความเสี่ยงของ DOCX/vision ที่ตามมา **ไม่เคย live-verify
+XLSX เลย** — บันทึกไว้ชัดเจนใน docstring/`.env.example`/test ว่านี่คือ "built, not verified"
+
+### Phase 4 — DOCX: ผู้ใช้ให้เอกสารจริง สมมติฐานของแผนผิดอีกครั้ง แต่ในทางที่ปลอดภัยกว่า
+
+ผู้ใช้ให้ไฟล์จริง (`TOR จ้างธุรการกองช่าง อบต.ตะกั่วป่า .docx`) วิเคราะห์โครงสร้างก่อนเขียนโค้ด
+ด้วย stdlib `zipfile`/`ElementTree` (ไม่เสียเงิน ไม่ต้องรอ dependency): พบว่า **134 ย่อหน้า มี
+ตารางแค่ 1 ตาราง** — ตรงข้ามกับที่แผนคาดไว้ ("ข้อมูล TOR อยู่ในตารางเป็นหลัก") และ **ไม่มี Word
+heading style เลย** (ทุกย่อหน้าใช้ style `a7` หรือไม่มี style) เลขหัวข้อ (`1. ความเป็นมา`,
+`3.3 มีวุฒิ...`) พิมพ์เป็นข้อความธรรมดา ไม่ใช่ heading จริง — จึง **ไม่ทำ `heading_path` เลย**
+(เดิมแผนจะใช้ style เป็นตัวสร้าง heading hierarchy แต่ไม่มีอะไรให้ใช้จริง) เอกสารยังมีเลขผสม
+ระบบ (`3๐` = เลขอารบิก 3 + เลขไทย ๐ = 30 จริง ๆ) ใช้ `normalize_text` เดิม (ตัวเดียวกับ PDF path)
+แก้ให้ฟรีเพราะรองรับเลขไทยอยู่แล้ว
+
+จุดยากจริงที่ยืนยันจากเอกสารจริง: `python-docx`'s `document.paragraphs` **ไม่รวมข้อความในตาราง
+เลย** และไม่มี unified document-order view — ต้องเดินตาม `document.element.body`'s XML children
+เอง แยก `w:p`/`w:tbl` ทีละตัว ตารางเดียวในเอกสารจริงเก็บงาน/ตัวชี้วัด (deliverables) ไว้ — ถ้าใช้
+`document.paragraphs` เฉย ๆ จะพลาดข้อมูลนี้ไปเงียบ ๆ (silent data loss ที่แย่ที่สุดสำหรับเครื่องมือนี้)
+
+Live verify (haiku, เอกสารจริง 101 ย่อหน้า, $0.1322): **32 source ทั้งหมดเป็น `paragraph`**
+(เอกสารนี้ไม่มีค่าจาก table cell เลยเพราะ deliverables ในตารางเป็น work-measurement ไม่ใช่
+field ที่ schema สกัด) — ตรวจสอบ ref ทุกอันที่โมเดลอ้าง **มีอยู่จริงใน document ที่ส่งไป 100%**
+(ไม่มี hallucinated ref เลย) `table_cell_docx` ยังไม่เคย live-verify (เอกสารนี้ไม่มีค่าจากตาราง
+ให้ทดสอบ) — บันทึกไว้เป็นข้อจำกัดของหลักฐานที่มี ไม่ใช่ว่าโค้ดผิด
+
+### Phase 5 — vision OCR: เจอบั๊กจริง 3 ตัวจาก live evidence ล้วน ไม่มีการเดาเลยสักจุด
+
+เพิ่ม `ImageBlock` + `ProviderCapabilities.vision_input` ใน `base.py`, ต่อสาย vision เข้าทั้ง 4
+adapter (Anthropic/OpenAI/Gemini เปิด `vision_input=True` ตรง ๆ, `openai_compat` ปิดไว้เป็น
+default เพราะ **probe อัตโนมัติแบบที่ใช้กับ structured-output ใช้ไม่ได้กับ vision** — endpoint ที่
+เพิกเฉยต่อภาพแล้วตอบจาก caption text อย่างเดียวจะได้ผลลัพธ์ที่ valid ตาม schema เป๊ะ ตรวจจับด้วย
+probe ไม่ได้เลย ต้องเปิดเองด้วย `TOR_OPENAI_COMPAT_VISION=1`) capability check ทำใน
+`client.py:extract()` เป็น pre-flight ก่อนรันกลุ่มไหนเลย เพราะ per-group override
+(`TOR_GROUP_<NAME>`) อาจชี้ไป provider อื่นที่ไม่รองรับ vision — เช็คทุก group ที่ resolve แล้ว
+ก่อน ไม่ใช่แค่ provider default
+
+**บั๊กจริง 3 ตัว เจอทีละตัวจาก live call กับเอกสารสแกนจริงของผู้ใช้ (16 หน้า จาก e-GP)**:
+
+1. **PNG ที่ 200 DPI ใหญ่เกิน**: เอกสาร 16 หน้าจริง render เป็น PNG ได้ ~55MB (base64) —
+   Anthropic ตอบ `413 Request exceeds the maximum size` ก่อนเช็ค API key ด้วยซ้ำ วัดจริงก่อน
+   ตัดสินใจ (ไม่เดา): เทียบ PNG vs JPEG ที่ DPI ต่าง ๆ พบว่า JPEG ที่ 150 DPI/quality 70 เหลือ
+   แค่ ~5.5MB (JPEG เหมาะกับภาพสแกนที่มี noise แบบภาพถ่าย มากกว่า PNG ที่ lossless) ผู้ใช้เลือก
+   ตัวเลขนี้เอง เพิ่ม `MAX_VISION_PAYLOAD_BYTES` เป็น safety net อีกชั้น (page count อย่างเดียว
+   ไม่พอ เพราะ 16 หน้ายังอยู่ใต้ `MAX_VISION_PAGES=20` แต่ byte เกินไปแล้ว)
+2. **`run_extraction.py` มี blanket-reject เดิมซ้ำอยู่**: ลบ check "สแกน = ปฏิเสธ 422" ออกจาก
+   `api/extract.py` แล้ว แต่ลืมว่า `run_extraction.py` (CLI) มี copy ของ check เดียวกันแยกอยู่ —
+   เจอจาก error message เก่าที่ CLI print ออกมาตรง ๆ ("ไม่รองรับใน v0.1 ไม่มี OCR") ทั้งที่โค้ด
+   ที่แก้แล้วบอกว่ารองรับ — แก้ทันทีเพราะ root cause ชัดจากข้อความ ไม่ต้องเดา
+3. **Anthropic ปฏิเสธ system block ว่างเปล่า**: เอกสารสแกนล้วน `document_text` เป็น `""` จริง
+   (ไม่เคยเกิดมาก่อน Phase 5 เพราะ blanket reject เดิมกันไว้ก่อนถึงจุดนี้เสมอ) พยายามแก้ 2 รอบ:
+   รอบแรกเอา `cache_control` ออกจาก block ว่าง (error เปลี่ยนจาก "cache_control cannot be set
+   for empty blocks" เป็น "text content blocks must be non-empty" — เผยว่าปัญหาจริงกว้างกว่านั้น)
+   รอบสองกรอง block ว่างออกจาก `system` list ทั้งหมด — ผ่าน ทั้ง 2 รอบยืนยันจาก error message
+   ของ Anthropic เองตรง ๆ ไม่มีการเดาเลย
+
+Live verify สุดท้าย (haiku, เอกสารสแกนจริง 16 หน้า, **$0.2630**): extraction ผ่านครบ **34 source
+ทั้งหมดเป็น `vision_page`** ไม่มี violation เลย หน้าที่อ้างกระจายทั่วเอกสาร (2,3,6,7,8,14 — ไม่ใช่
+หน้า 1 ซ้ำ ๆ พิสูจน์ว่าโมเดลอ่านภาพจริงแต่ละหน้า) `budget_amount: 14400000.0` ตรงกับ quote
+"๑๔,๔๐๐,๐๐๐.๐๐ บาท" เป๊ะ — พบ quote ที่อ่านผิดเล็กน้อย ("กรมบัญชีศึกษา" น่าจะเป็น "กรมบัญชีกลาง")
+ซึ่งเป็น vision transcription noise ที่คาดไว้แล้ว (เหตุผลที่ให้ `vision_page` แยกจาก `text_page`
+ตั้งแต่ Phase 1 — ความน่าเชื่อถือของ quote ไม่เท่ากัน)
+
+**ตัดสินใจเลื่อนไม่ทำเอง**: `confidence` ของ `vision_page` ควรสื่อความเสี่ยงเรื่องอ่านภาพไม่ชัด
+(เลอะ/เขียนมือ) ด้วยหรือไม่ — เป็นการขยายความหมายของกฎข้อ 4 ทั้งโปรเจกต์ ไม่ใช่แค่โค้ด รอผู้ใช้
+ตัดสินใจก่อน ไม่ได้เปลี่ยนพฤติกรรม prompt ไปเองเงียบ ๆ
+
+### สถานะรวม multi-format ingestion (2026-09-03)
+
+**ครบทั้ง 5 phase ตามแผน** Phase 1-4 commit แล้ว (`c73c66f`) Phase 5 (vision OCR) เสร็จโค้ด +
+test (120 ผ่านทั้งหมด) + live-verify แล้ว **ยังไม่ได้ commit** ตอนเขียนบรรทัดนี้
+
+**ยืนยันจริงแล้ว**: PDF ข้อความปกติ (เดิม), PDF สแกนล้วนผ่าน vision (Anthropic, เอกสารจริง 16
+หน้า), DOCX ที่มีแต่ paragraph (เอกสารจริงของผู้ใช้) **ยังไม่เคยยืนยันจริง**: XLSX (ปิดไว้ตาม
+คำขอผู้ใช้), DOCX ที่มีค่ามาจาก table cell (ไม่มีเอกสารทดสอบที่มีข้อมูลในตาราง), vision บน
+OpenAI/Gemini (โค้ดเขียนตาม SDK doc แต่ไม่เคยยิงจริง — ต่างจาก Anthropic ที่ยืนยันแล้ว)
+
+**ค่าใช้จ่ายจริงในเซสชันนี้**: Phase 1 ~$0.07, Phase 4 ~$0.13, Phase 5 (3 รอบ เพราะเจอบั๊ก 2 ตัว
+กลางทาง แต่ 2 รอบแรก fail ก่อนถึงขั้นเรียกโมเดลจริง — ไม่เสียเงินซ้ำ) ~$0.26 — รวมทั้งเซสชัน
+ต่ำกว่า $0.50 ถามผู้ใช้ก่อนทุกจุดที่จะเสียเงินจริง

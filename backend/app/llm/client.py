@@ -23,7 +23,13 @@ from pydantic import BaseModel, ValidationError
 
 from app.derive.pricing import Cost, Usage, compute_cost
 from app.llm.groups import SHARED_RULES, SOURCE_KIND_RULES, FieldGroup
-from app.llm.providers.base import LLMProvider, ProviderAPIError, SystemBlock
+from app.llm.providers.base import (
+    ImageBlock,
+    LLMProvider,
+    ProviderAPIError,
+    ProviderUnsupportedError,
+    SystemBlock,
+)
 from app.models.schema import TORDocumentExtracted
 
 MAX_TOKENS = 8_000  # per group call -- each group covers a small schema slice
@@ -64,7 +70,9 @@ def _extract_one_group(
     model: str,
     group: FieldGroup,
     source_kind_rules: str,
+    images: list[ImageBlock] | None = None,
 ) -> tuple[BaseModel, Usage, int]:
+    images = images or []
     last_error: Exception | None = None
     for attempt in range(MAX_RETRIES + 1):
         instruction = group.instruction
@@ -92,6 +100,7 @@ def _extract_one_group(
         try:
             result = provider.complete_structured(
                 system_blocks=system_blocks,
+                images=images,
                 user_message=(
                     f"สกัดข้อมูลกลุ่ม '{group.name}' ตาม schema จากเอกสารข้างต้นให้ครบทุกฟิลด์"
                 ),
@@ -130,13 +139,19 @@ def extract(
     groups: list[FieldGroup],
     provider_for: Callable[[str, str], LLMProvider] | None = None,
     document_kind: str = "pdf",
+    images: list[ImageBlock] | None = None,
 ) -> ExtractionRunResult:
     """`provider_for` resolves a group's override (name, model) to a provider
     instance. Required only if some group sets `provider`; a plain
     single-provider run can omit it (see Task 5's per-group override).
     Takes the model too, not just the provider name -- an openai_compat
     override needs the actual model to run its construction-time capability
-    probe against (probing a placeholder model name 404s)."""
+    probe against (probing a placeholder model name 404s).
+
+    `images` carries rendered scanned-PDF pages, if any; every group receives
+    the same images, mirroring how the full `document_text` already goes to
+    every group (no group knows in advance which page is relevant to it)."""
+    images = images or []
     try:
         source_kind_rules = SOURCE_KIND_RULES[document_kind]
     except KeyError:
@@ -146,11 +161,15 @@ def extract(
             f"this format (rule #2)"
         ) from None
 
-    merged: dict = {}
-    total_usage = Usage(0, 0, 0, 0)
-    total_duration_ms = 0
-    usage_by_pair: dict[tuple[str, str], Usage] = {}
-
+    # Resolve every group's provider up front, before running any of them.
+    # This is what makes the vision check below correct for a per-group
+    # override (TOR_GROUP_<NAME> can name a different provider than the
+    # document default): checking only the default would let a doomed run
+    # burn money on groups 1-3 before discovering group 4's override can't
+    # do vision. It also means an override's provider (including
+    # openai_compat's construction-time probe) is constructed exactly once,
+    # here, and reused below rather than rebuilt per group.
+    resolved: list[tuple[FieldGroup, LLMProvider, str]] = []
     for group in groups:
         group_model = group.model or model
         group_provider = provider
@@ -161,13 +180,32 @@ def extract(
                     f"provider_for resolver was supplied"
                 )
             group_provider = provider_for(group.provider, group_model)
+        resolved.append((group, group_provider, group_model))
 
+    if images:
+        unsupported = [(g, p) for g, p, _ in resolved if not p.capabilities.vision_input]
+        if unsupported:
+            group, group_provider = unsupported[0]
+            raise ProviderUnsupportedError(
+                f"group '{group.name}' resolves to provider '{group_provider.name}', which "
+                f"does not support vision input, but this document has {len(images)} scanned "
+                f"page(s) with no text layer that require it -- refusing to start rather than "
+                f"silently skip pages the model would otherwise never see"
+            )
+
+    merged: dict = {}
+    total_usage = Usage(0, 0, 0, 0)
+    total_duration_ms = 0
+    usage_by_pair: dict[tuple[str, str], Usage] = {}
+
+    for group, group_provider, group_model in resolved:
         parsed, usage, duration_ms = _extract_one_group(
             group_provider,
             document_text=document_text,
             model=group_model,
             group=group,
             source_kind_rules=source_kind_rules,
+            images=images,
         )
         merged.update(parsed.model_dump())
         total_usage.input_tokens += usage.input_tokens

@@ -338,6 +338,8 @@ def main(argv: list[str] | None = None) -> int:
                 model=model,
                 groups=groups,
                 provider_for=_provider_for,
+                document_kind=ingested.meta.document_kind,
+                images=ingested.images,
             )
         except (
             ExtractionValidationError,

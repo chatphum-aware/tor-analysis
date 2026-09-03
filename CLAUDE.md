@@ -134,6 +134,8 @@ The project is **AGPL-3.0**, forced by the PyMuPDF dependency (AGPL-or-commercia
 backend is a network service, so AGPL §13 applies: running a modified version as a service
 obliges you to publish that version's source. Do not change the license, and flag it before
 adding any dependency whose license conflicts — that decision is the owner's, not yours.
+`python-docx` (DOCX ingestion) and `openpyxl` (XLSX ingestion, gated off — see below) were
+both added and verified MIT against PyPI before being introduced.
 
 ## Provider architecture
 
@@ -168,6 +170,15 @@ are blocked by account issues (no OpenAI billing credit; Gemini's free-tier dail
 not code problems — see `docs/plans/2026-09-02-multi-provider-migration.md` for exactly what
 each one has and hasn't been verified against. `openai_compat` has been verified end-to-end
 against a real hosted endpoint (Groq).
+
+**Vision input (scanned PDF pages, no text layer):** `ProviderCapabilities.vision_input` is
+`True` for `anthropic`/`openai`/`gemini` and `False` by default for `openai_compat` (opt in
+with `TOR_OPENAI_COMPAT_VISION=1` — deliberately never auto-probed like structured output,
+because a stack that silently ignores an image and answers from the caption text alone
+produces schema-valid, plausible output with no way to detect it). Only `anthropic` has been
+verified live with real image content (a real 16-page scanned document); the `openai`/
+`gemini` message shapes for images are written to each SDK's documented API but have not
+been run against a real call — treat them the same as their un-verified eval gates above.
 
 ## Where things are
 

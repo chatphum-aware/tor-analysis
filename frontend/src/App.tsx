@@ -5,7 +5,7 @@ import { ApiError, extractDocument } from "./api/client";
 import { ExportButtons } from "./components/ExportButtons";
 import { PdfViewer } from "./components/PdfViewer";
 import { ResultTable } from "./components/ResultTable";
-import { ScannedNotice } from "./components/ScannedNotice";
+import { RejectedFileNotice } from "./components/RejectedFileNotice";
 import { UploadPane } from "./components/UploadPane";
 import { UsageFooter } from "./components/UsageFooter";
 import { DocxViewer } from "./components/DocxViewer";
@@ -33,7 +33,11 @@ export function App() {
     mutation.reset();
   };
 
-  const isScannedError = mutation.error instanceof ApiError && mutation.error.status === 422;
+  // A 422 means the file was read but exceeds a bound this tool won't
+  // silently work around (too many scanned pages for vision, a spreadsheet/
+  // Word doc too large to read in one pass, etc.) -- see api/extract.py's
+  // 422 raise sites for the exact cases. Anything else is a generic error.
+  const isRejectedError = mutation.error instanceof ApiError && mutation.error.status === 422;
 
   return (
     <div className="app-shell">
@@ -42,12 +46,12 @@ export function App() {
       </header>
 
       <div className="app-body">
-        {!mutation.data && !isScannedError && (
+        {!mutation.data && !isRejectedError && (
           <UploadPane
             onSubmit={handleSubmit}
             isPending={mutation.isPending}
             errorMessage={
-              mutation.error && !isScannedError
+              mutation.error && !isRejectedError
                 ? mutation.error instanceof ApiError
                   ? mutation.error.message
                   : "เกิดข้อผิดพลาดที่ไม่คาดคิด"
@@ -56,8 +60,8 @@ export function App() {
           />
         )}
 
-        {isScannedError && mutation.error instanceof ApiError && (
-          <ScannedNotice message={mutation.error.message} onReset={handleReset} />
+        {isRejectedError && mutation.error instanceof ApiError && (
+          <RejectedFileNotice message={mutation.error.message} onReset={handleReset} />
         )}
 
         {mutation.data && file && (

@@ -46,15 +46,18 @@ def main(argv: list[str] | None = None) -> int:
     ingested = ingest_path(args.doc_path)
     ingest_meta = ingested.meta
 
-    if ingest_meta.usable_text_page_ratio == 0.0:  # pdf-only condition
-        print(
-            "⚠️  เอกสารนี้ไม่มีข้อความให้ดึงเลยแม้แต่หน้าเดียว — "
-            "นี่คือไฟล์สแกน ไม่รองรับใน v0.1 (ไม่มี OCR) จะไม่เรียก API",
-            file=sys.stderr,
-        )
-        return 1
-
     if ingest_meta.document_kind == "pdf":
+        if ingest_meta.usable_text_page_ratio == 0.0:
+            # Fully scanned: no rejection here -- image_only_pages were
+            # already rendered into ingested.images by the ingest layer, and
+            # get sent to the LLM as images if the configured provider
+            # supports vision (checked correctly inside llm.client.extract(),
+            # which accounts for per-group provider overrides this CLI-level
+            # code has no visibility into).
+            print(
+                f"เอกสารนี้เป็นไฟล์สแกนทั้งหมด ({len(ingested.images)} หน้า) — "
+                f"จะส่งเป็นภาพให้โมเดลอ่านแทน (ต้องใช้ provider ที่รองรับ vision)",
+            )
         print(
             f"พบข้อความใช้ได้ {ingest_meta.usable_text_page_ratio:.0%} ของ {ingest_meta.page_count} หน้า "
             f"({len(ingested.document_text):,} ตัวอักษร) — กำลังเรียก Claude ({model}) ..."
@@ -93,6 +96,7 @@ def main(argv: list[str] | None = None) -> int:
             groups=groups,
             provider_for=_provider_for,
             document_kind=ingest_meta.document_kind,
+            images=ingested.images,
         )
     except ExtractionValidationError as exc:
         print(f"error: {exc}", file=sys.stderr)

@@ -111,21 +111,45 @@ def test_extract_docx_is_accepted_and_reaches_extraction(monkeypatch):
     assert resp.status_code == 500  # fake key rejected downstream
 
 
-def test_extract_scanned_file_returns_422_without_calling_api(monkeypatch):
+def test_extract_scanned_file_now_reaches_extraction_via_vision(monkeypatch):
+    """Phase 5 (vision OCR) means a scanned PDF is no longer rejected outright
+    -- its image_only pages are rendered and sent to the LLM as images, and
+    the configured provider (anthropic) supports that. A fake key still
+    fails, but downstream at the LLM call (500), which is the proof this
+    reached extraction instead of being blanket-rejected the way it was
+    before this phase. See test_ingest.py for the ingestion-layer tests of
+    the actual image rendering."""
     if not _SCANNED_SAMPLE.exists():
         import pytest
 
         pytest.skip(f"sample file not present: {_SCANNED_SAMPLE}")
-    # a fake key that would fail against the real API -- proves the scan
-    # gate rejects BEFORE any network call happens (no AuthenticationError
-    # bubbles up; it must be the 422 scan message, not a 500 from a bad key)
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test-fake-key-that-would-401-if-called")
     with open(_SCANNED_SAMPLE, "rb") as f:
         resp = client.post(
             "/api/extract", files={"file": (_SCANNED_SAMPLE.name, f.read(), "application/pdf")}
         )
+    assert resp.status_code == 500, resp.json()
+    assert "API key" in resp.json()["detail"]
+
+
+def test_extract_too_many_scanned_pages_returns_422(monkeypatch):
+    """A document with more image_only pages than the vision cap must fail
+    loudly (422) rather than silently sending only some of them -- a dropped
+    page would look like its content was simply absent."""
+    if not _SCANNED_SAMPLE.exists():
+        import pytest
+
+        pytest.skip(f"sample file not present: {_SCANNED_SAMPLE}")
+    import app.ingest.pdf_ingest as pdf_ingest_module
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test-fake-key")
+    monkeypatch.setattr(pdf_ingest_module, "MAX_VISION_PAGES", 1)
+    with open(_SCANNED_SAMPLE, "rb") as f:
+        resp = client.post(
+            "/api/extract", files={"file": (_SCANNED_SAMPLE.name, f.read(), "application/pdf")}
+        )
     assert resp.status_code == 422
-    assert "สแกน" in resp.json()["detail"]
+    assert "หน้า" in resp.json()["detail"]
 
 
 def test_export_csv_returns_csv_content_type():

@@ -12,15 +12,29 @@ schema-constrained decoding; several hosted aggregators accept only loose
 static capability flag would therefore be a lie for at least some endpoints, so
 construction issues one tiny probe request and refuses the endpoint if it
 cannot come back with schema-valid output.
+
+Vision is handled differently -- NOT auto-probed like structured output --
+because the two failure modes aren't symmetric. A stack that ignores the
+schema parameter reliably produces invalid JSON, so a probe catches it. A
+stack that silently ignores an image and answers from the caption text alone
+produces schema-valid, entirely plausible output; there is no request you can
+send that reliably tells the difference. Trusting a probe here would risk
+exactly the unverifiable output this project's structured-output requirement
+exists to prevent. So `vision_input` is a manual operator opt-in
+(`TOR_OPENAI_COMPAT_VISION=1`), off by default, documented as a real gap in
+the plan's risk list -- not a placeholder waiting for a smarter probe.
 """
 from __future__ import annotations
 
+import base64
 import copy
+import os
 
 import openai
 from pydantic import BaseModel, ValidationError
 
 from app.llm.providers.base import (
+    ImageBlock,
     ProviderAPIError,
     ProviderAuthError,
     ProviderCapabilities,
@@ -30,6 +44,9 @@ from app.llm.providers.base import (
     ProviderResult,
     SystemBlock,
 )
+
+_VISION_OPT_IN_ENV = "TOR_OPENAI_COMPAT_VISION"
+_TRUTHY = {"1", "true", "yes", "on"}
 
 
 def _make_strict_json_schema(schema: dict) -> dict:
@@ -101,6 +118,9 @@ class OpenAICompatProvider:
             native_structured_output=True,  # provisional; the probe below confirms
             prompt_caching=False,
             reports_token_usage=True,
+            # Manual opt-in only -- see module docstring for why this can't
+            # be auto-probed the way native_structured_output is.
+            vision_input=os.environ.get(_VISION_OPT_IN_ENV, "").strip().lower() in _TRUTHY,
         )
         if probe:
             self._probe(probe_model)
@@ -120,6 +140,7 @@ class OpenAICompatProvider:
         try:
             self.complete_structured(
                 system_blocks=[SystemBlock(text="Reply with ok=true.")],
+                images=[],
                 user_message="ok?",
                 schema=_ProbeSchema,
                 model=model,
@@ -139,19 +160,37 @@ class OpenAICompatProvider:
         self,
         *,
         system_blocks: list[SystemBlock],
+        images: list[ImageBlock],
         user_message: str,
         schema: type[BaseModel],
         model: str,
         max_tokens: int,
     ) -> ProviderResult:
         system_text = "\n\n".join(block.text for block in system_blocks)
+        # Same content-array shape as OpenAIProvider (this endpoint speaks the
+        # same protocol) -- client.py only ever passes images here when the
+        # operator has explicitly set TOR_OPENAI_COMPAT_VISION=1, since
+        # `vision_input` is never auto-probed (see module docstring).
+        if images:
+            user_content: list[dict] = []
+            for image in images:
+                user_content.append(
+                    {"type": "text", "text": f"[หน้า {image.page} — ภาพหน้าเอกสารที่สแกน]"}
+                )
+                b64 = base64.b64encode(image.data).decode("ascii")
+                user_content.append(
+                    {"type": "image_url", "image_url": {"url": f"data:{image.media_type};base64,{b64}"}}
+                )
+            user_content.append({"type": "text", "text": user_message})
+        else:
+            user_content = user_message
         try:
             completion = self._client.chat.completions.create(
                 model=model,
                 max_tokens=max_tokens,
                 messages=[
                     {"role": "system", "content": system_text},
-                    {"role": "user", "content": user_message},
+                    {"role": "user", "content": user_content},
                 ],
                 response_format={
                     "type": "json_schema",

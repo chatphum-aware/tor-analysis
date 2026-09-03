@@ -17,6 +17,8 @@ from app.derive.calculations import assemble_document
 from app.ingest.base import UnsupportedDocumentError, UnsupportedKindError
 from app.ingest.detect import sniff_document_kind
 from app.ingest.dispatch import ingest_as, supported_kinds
+from app.ingest.docx_ingest import DocxTooLargeError
+from app.ingest.pdf_ingest import TooManyVisionPagesError
 from app.ingest.xlsx_ingest import XlsxTooLargeError
 from app.llm.client import ExtractionValidationError, extract as llm_extract
 from app.llm.groups import FIELD_GROUPS, apply_group_overrides
@@ -73,7 +75,10 @@ async def extract_endpoint(file: UploadFile = File(...)) -> TORDocument:
             status_code=415,
             detail=f"ยังไม่รองรับไฟล์ {exc.kind.upper()} — รองรับเฉพาะ {_supported_formats_th()}",
         ) from None
-    except XlsxTooLargeError as exc:
+    except (XlsxTooLargeError, DocxTooLargeError, TooManyVisionPagesError) as exc:
+        # Same family: the file was read successfully but exceeds a bound
+        # this tool refuses to silently truncate past (rule #5's "never
+        # return a partial result quietly", applied to ingestion).
         raise HTTPException(status_code=422, detail=str(exc)) from None
     except Exception as exc:  # noqa: BLE001 - any parser open/parse failure -> 400
         # Format was recognized, so this is a broken file, not a wrong one.
@@ -81,17 +86,14 @@ async def extract_endpoint(file: UploadFile = File(...)) -> TORDocument:
             status_code=400, detail=f"เปิดไฟล์ {kind.upper()} ไม่ได้: {exc}"
         ) from None
 
-    # PDF-only gate: a spreadsheet has no pages, so this ratio is None there.
-    if ingested.meta.usable_text_page_ratio == 0.0:
-        # rule: never return an empty result for a scanned file -- say so explicitly
-        raise HTTPException(
-            status_code=422,
-            detail=(
-                "เอกสารนี้เป็นไฟล์สแกน ไม่มีข้อความให้ดึงเลยแม้แต่หน้าเดียว — "
-                "ยังไม่รองรับไฟล์สแกนใน v0.1 (ไม่มี OCR)"
-            ),
-        )
-
+    # A scanned PDF (no text layer) is no longer rejected outright: its
+    # image_only pages were already rendered into `ingested.images` above,
+    # and get sent to the LLM as images if the configured provider supports
+    # vision. Whether it does is checked once, correctly, in
+    # llm.client.extract() -- not here -- because that check has to account
+    # for a per-group provider override (TOR_GROUP_<NAME>), which this
+    # request-level code has no visibility into. If unsupported, extract()
+    # raises ProviderUnsupportedError, already handled below as a 502.
     document_text = ingested.document_text
 
     groups = apply_group_overrides(FIELD_GROUPS, config.group_overrides)
@@ -125,6 +127,7 @@ async def extract_endpoint(file: UploadFile = File(...)) -> TORDocument:
             groups=groups,
             provider_for=_provider_for,
             document_kind=ingested.meta.document_kind,
+            images=ingested.images,
         )
 
     try:

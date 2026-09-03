@@ -1,9 +1,12 @@
+import pytest
 from pydantic import BaseModel
 
 from app.llm.providers.base import (
+    ImageBlock,
     LLMProvider,
     ProviderCapabilities,
     ProviderResult,
+    ProviderUnsupportedError,
     ProviderUsage,
     SystemBlock,
 )
@@ -18,19 +21,23 @@ class FakeProvider:
     Records the last call so tests can assert what client.py sent."""
 
     name = "fake"
-    capabilities = ProviderCapabilities(
-        native_structured_output=True, prompt_caching=True, reports_token_usage=True
-    )
 
-    def __init__(self, parsed=None, usage=None):
+    def __init__(self, parsed=None, usage=None, vision_input=True):
         self._parsed = parsed if parsed is not None else _Tiny(value="ok")
         self._usage = usage or ProviderUsage(input_tokens=10, output_tokens=5)
+        self.capabilities = ProviderCapabilities(
+            native_structured_output=True,
+            prompt_caching=True,
+            reports_token_usage=True,
+            vision_input=vision_input,
+        )
         self.calls: list[dict] = []
 
-    def complete_structured(self, *, system_blocks, user_message, schema, model, max_tokens):
+    def complete_structured(self, *, system_blocks, images, user_message, schema, model, max_tokens):
         self.calls.append(
             {
                 "system_blocks": system_blocks,
+                "images": images,
                 "user_message": user_message,
                 "schema": schema,
                 "model": model,
@@ -58,6 +65,7 @@ def test_complete_structured_returns_parsed_and_usage():
     provider = FakeProvider()
     result = provider.complete_structured(
         system_blocks=[SystemBlock(text="rules", cacheable=True)],
+        images=[],
         user_message="go",
         schema=_Tiny,
         model="fake-1",
@@ -237,3 +245,110 @@ def test_api_key_for_provider_reads_the_right_env_var(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     assert api_key_for_provider("openai") == "sk-openai-test"
     assert api_key_for_provider("anthropic") is None
+
+
+# --- Vision support (Phase 5: scanned-PDF pages sent as images) -----------
+#
+# Images always go through the SAME extract() entry point as text-only runs
+# -- there's no separate "vision mode" code path, only an extra `images`
+# argument that's empty on every non-scanned document.
+
+
+def test_extract_passes_images_through_to_every_group(monkeypatch):
+    monkeypatch.setattr(TORDocumentExtracted, "model_validate", staticmethod(lambda merged: merged))
+    provider = FakeProvider(parsed=BasicInfoGroup.model_construct(), vision_input=True)
+    group = FieldGroup(name="basic_info", schema=BasicInfoGroup, instruction="i")
+    image = ImageBlock(page=1, media_type="image/png", data=b"fake-png-bytes")
+
+    extract(document_text="d", provider=provider, model="m", groups=[group], images=[image])
+
+    assert provider.calls[0]["images"] == [image]
+
+
+def test_extract_with_no_images_sends_an_empty_list_not_none():
+    """Every existing text-only call site relies on this -- `images` should
+    never reach a provider as None, only as []."""
+    provider = FakeProvider(parsed=BasicInfoGroup.model_construct())
+    group = FieldGroup(name="basic_info", schema=BasicInfoGroup, instruction="i")
+
+    _extract_one_group(provider, document_text="d", model="m", group=group, source_kind_rules="r")
+
+    assert provider.calls[0]["images"] == []
+
+
+def test_extract_refuses_to_start_when_a_resolved_provider_lacks_vision():
+    """The check must run BEFORE any group is called -- a doomed run should
+    not burn money on earlier groups before discovering a later group's
+    resolved provider can't do vision."""
+    no_vision = FakeProvider(parsed=BasicInfoGroup.model_construct(), vision_input=False)
+    group = FieldGroup(name="basic_info", schema=BasicInfoGroup, instruction="i")
+    image = ImageBlock(page=1, media_type="image/png", data=b"x")
+
+    with pytest.raises(ProviderUnsupportedError, match="vision"):
+        extract(document_text="d", provider=no_vision, model="m", groups=[group], images=[image])
+
+    assert no_vision.calls == []
+
+
+def test_extract_checks_every_group_override_for_vision_not_just_the_default():
+    """A per-group TOR_GROUP_<NAME> override can name a different provider
+    than the document default -- the vision check must catch a bad override
+    even when the default provider itself supports vision, and must do so
+    before the FIRST group (which uses the vision-capable default) runs."""
+    has_vision = FakeProvider(parsed=BasicInfoGroup.model_construct(), vision_input=True)
+    no_vision = FakeProvider(parsed=BasicInfoGroup.model_construct(), vision_input=False)
+    groups = [
+        FieldGroup(name="basic_info", schema=BasicInfoGroup, instruction="a"),
+        FieldGroup(
+            name="qualifications",
+            schema=BasicInfoGroup,
+            instruction="b",
+            provider="weak",
+            model="m2",
+        ),
+    ]
+    image = ImageBlock(page=1, media_type="image/png", data=b"x")
+
+    with pytest.raises(ProviderUnsupportedError, match="qualifications"):
+        extract(
+            document_text="d",
+            provider=has_vision,
+            model="m",
+            groups=groups,
+            provider_for=lambda name, _model: no_vision,
+            images=[image],
+        )
+
+    # Neither group ran -- the default-provider group didn't get a head
+    # start before the override was found to be incapable.
+    assert has_vision.calls == []
+    assert no_vision.calls == []
+
+
+def test_extract_allows_vision_when_every_resolved_group_provider_supports_it(monkeypatch):
+    monkeypatch.setattr(TORDocumentExtracted, "model_validate", staticmethod(lambda merged: merged))
+    default_vision = FakeProvider(parsed=BasicInfoGroup.model_construct(), vision_input=True)
+    override_vision = FakeProvider(parsed=BasicInfoGroup.model_construct(), vision_input=True)
+    groups = [
+        FieldGroup(name="basic_info", schema=BasicInfoGroup, instruction="a"),
+        FieldGroup(
+            name="qualifications",
+            schema=BasicInfoGroup,
+            instruction="b",
+            provider="strong",
+            model="m2",
+        ),
+    ]
+    image = ImageBlock(page=1, media_type="image/png", data=b"x")
+
+    extract(
+        document_text="d",
+        provider=default_vision,
+        model="m",
+        groups=groups,
+        provider_for=lambda name, _model: override_vision,
+        images=[image],
+    )
+
+    assert default_vision.calls[0]["images"] == [image]
+    assert override_vision.calls[0]["images"] == [image]

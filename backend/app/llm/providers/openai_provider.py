@@ -21,6 +21,11 @@ instance on our actual group schemas (vs. a refusal/None), and whether
 is usually described as read-only from the caller's perspective -- this
 field may only populate for specific caching-eligible request shapes).
 
+Vision (added for scanned-PDF support): `image_url` content parts inside a
+`.parse()` call are per OpenAI's documented chat completions shape, but this
+exact combination (image content + `.parse()`'s structured-output parsing)
+has NOT been confirmed live -- needs its own spike before relying on it.
+
 Two differences from Anthropic worth knowing:
   - No explicit prompt-caching API. OpenAI caches long prompt prefixes
     automatically and reports hits in usage; there is no `cache_control` to
@@ -30,10 +35,13 @@ Two differences from Anthropic worth knowing:
 """
 from __future__ import annotations
 
+import base64
+
 import openai
 from pydantic import BaseModel
 
 from app.llm.providers.base import (
+    ImageBlock,
     ProviderAPIError,
     ProviderAuthError,
     ProviderCapabilities,
@@ -50,6 +58,7 @@ class OpenAIProvider:
         native_structured_output=True,
         prompt_caching=False,
         reports_token_usage=True,
+        vision_input=True,
     )
 
     def __init__(self, api_key: str | None, base_url: str | None = None) -> None:
@@ -59,19 +68,36 @@ class OpenAIProvider:
         self,
         *,
         system_blocks: list[SystemBlock],
+        images: list[ImageBlock],
         user_message: str,
         schema: type[BaseModel],
         model: str,
         max_tokens: int,
     ) -> ProviderResult:
         system_text = "\n\n".join(block.text for block in system_blocks)
+        # NOT yet confirmed by a live call whether .parse() accepts an image
+        # content array identically to a plain string (see module docstring
+        # for what else in this adapter carries that same caveat).
+        if images:
+            user_content: list[dict] = []
+            for image in images:
+                user_content.append(
+                    {"type": "text", "text": f"[หน้า {image.page} — ภาพหน้าเอกสารที่สแกน]"}
+                )
+                b64 = base64.b64encode(image.data).decode("ascii")
+                user_content.append(
+                    {"type": "image_url", "image_url": {"url": f"data:{image.media_type};base64,{b64}"}}
+                )
+            user_content.append({"type": "text", "text": user_message})
+        else:
+            user_content = user_message
         try:
             completion = self._client.chat.completions.parse(
                 model=model,
                 max_completion_tokens=max_tokens,
                 messages=[
                     {"role": "system", "content": system_text},
-                    {"role": "user", "content": user_message},
+                    {"role": "user", "content": user_content},
                 ],
                 response_format=schema,
             )

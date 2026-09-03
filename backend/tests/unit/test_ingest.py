@@ -335,3 +335,86 @@ def test_docx_is_enabled_by_default_unlike_xlsx():
     assert "docx" in supported_kinds()
     data = _docx_bytes(lambda d: d.add_paragraph("hello"))
     assert ingest_bytes(data, "tor.docx").meta.document_kind == "docx"
+
+
+# --- Vision rendering for scanned PDF pages (Phase 5) -----------------------
+#
+# The real finding that shaped this: a real 16-page scanned document (under
+# MAX_VISION_PAGES=20) still produced ~55MB of base64 PNG data at 200 DPI --
+# Anthropic rejected the request outright with a 413 before even checking the
+# API key. JPEG cut the same document to ~5MB. Page COUNT alone never bounded
+# this; only a byte-size check does, which is why there are two independent
+# caps below.
+
+import fitz  # noqa: E402  (PyMuPDF, grouped with the vision tests it builds fixtures for)
+
+import app.ingest.pdf_ingest as pdf_ingest_module  # noqa: E402
+from app.ingest.pdf_ingest import TooManyVisionPagesError, ingest_pdf_bytes  # noqa: E402
+
+
+def _image_only_pdf_bytes(n_pages: int = 1) -> bytes:
+    """A synthetic PDF with no text layer at all, classified image_only by
+    the same heuristic real scanned pages are -- see app/pdf/scanned.py."""
+    doc = fitz.open()
+    pix = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, 800, 1000))
+    pix.set_rect(pix.irect, (200, 200, 200))
+    for _ in range(n_pages):
+        page = doc.new_page()
+        page.insert_image(page.rect, pixmap=pix)
+    data = doc.tobytes()
+    doc.close()
+    return data
+
+
+def test_scanned_pdf_renders_pages_as_jpeg_not_png():
+    """PNG was the original choice and is wrong for this content -- see the
+    module comment on VISION_RENDER_DPI for why (scanned pages are
+    photo-like, which is exactly what PNG's lossless compression handles
+    worst)."""
+    ing = ingest_pdf_bytes(_image_only_pdf_bytes(1))
+
+    assert len(ing.images) == 1
+    assert ing.images[0].media_type == "image/jpeg"
+    assert ing.images[0].data[:3] == b"\xff\xd8\xff"  # JPEG magic bytes
+    assert ing.images[0].page == 1
+
+
+def test_text_only_pdf_never_triggers_rendering():
+    """The common case (a real text layer, no scanned pages) must be
+    completely unaffected -- rendering only runs for image_only pages."""
+    doc = fitz.open()
+    doc.new_page().insert_text((72, 72), "hello, this page has real text")
+    data = doc.tobytes()
+    doc.close()
+
+    ing = ingest_pdf_bytes(data)
+
+    assert ing.images == []
+
+
+def test_scanned_pdf_refuses_past_the_page_count_cap(monkeypatch):
+    monkeypatch.setattr(pdf_ingest_module, "MAX_VISION_PAGES", 2)
+
+    with pytest.raises(TooManyVisionPagesError):
+        ingest_pdf_bytes(_image_only_pdf_bytes(3))
+
+
+def test_scanned_pdf_refuses_past_the_payload_size_cap_even_under_page_cap(monkeypatch):
+    """The regression this guards: a document can be well under
+    MAX_VISION_PAGES and still be too large in bytes -- confirmed live (see
+    module comment). A cap on page count alone would have missed it."""
+    monkeypatch.setattr(pdf_ingest_module, "MAX_VISION_PAGES", 10)
+    monkeypatch.setattr(pdf_ingest_module, "MAX_VISION_PAYLOAD_BYTES", 1000)
+
+    with pytest.raises(TooManyVisionPagesError):
+        ingest_pdf_bytes(_image_only_pdf_bytes(2))  # 2 pages, well under the page cap
+
+
+def test_scanned_pdf_within_both_caps_succeeds(monkeypatch):
+    monkeypatch.setattr(pdf_ingest_module, "MAX_VISION_PAGES", 5)
+    monkeypatch.setattr(pdf_ingest_module, "MAX_VISION_PAYLOAD_BYTES", 50 * 1024 * 1024)
+
+    ing = ingest_pdf_bytes(_image_only_pdf_bytes(3))
+
+    assert len(ing.images) == 3
+    assert [img.page for img in ing.images] == [1, 2, 3]

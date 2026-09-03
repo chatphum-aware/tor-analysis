@@ -25,7 +25,14 @@
 
 ## ข้อจำกัดที่ควรรู้ (v0.1)
 
-- **ไม่มี OCR** — เอกสารที่เป็นภาพสแกนล้วนจะไม่ได้รับการรองรับ ต้องเป็น PDF ที่มี text layer
+- **รองรับ PDF ที่เป็นภาพสแกน (vision OCR)** — หน้าที่ไม่มี text layer จะถูกแปลงเป็นภาพ
+  แล้วส่งให้โมเดลที่รองรับ vision อ่านโดยตรง แทนที่จะปฏิเสธทันที (ยืนยันแล้วว่าใช้ได้จริงกับ
+  Anthropic บนเอกสารสแกนจริง 16 หน้า) — ต้องใช้ provider ที่รองรับ vision (Anthropic/OpenAI/
+  Gemini รองรับเสมอ; `openai_compat` ต้องเปิดเองด้วย `TOR_OPENAI_COMPAT_VISION=1` เพราะ
+  ตรวจสอบอัตโนมัติไม่ได้ว่า endpoint นั้นอ่านภาพจริงหรือเพิกเฉย) เอกสารที่มีหน้าสแกนมากเกินไป
+  หรือรวมขนาดภาพใหญ่เกินไปจะถูกปฏิเสธอย่างชัดเจน (422) ไม่ใช่ตัดหน้าทิ้งเงียบ ๆ
+- **รองรับไฟล์ Word (.docx)** นอกเหนือจาก PDF แล้ว — อ้างอิงตำแหน่งด้วยย่อหน้า/ช่องตาราง
+  แทนเลขหน้า (ไฟล์ Word ไม่มีเลขหน้าจริงในไฟล์) ยืนยันแล้วกับ TOR จริงของหน่วยงานท้องถิ่น
 - **ไฮไลต์ใน PDF เป็น best-effort** ใช้การจับคู่ข้อความกับ text layer ของ pdf.js ไม่ใช่พิกัด
   bounding box จริง เอกสารที่ข้อความถูกตัดคำแปลก ๆ อาจไฮไลต์ไม่ครบ
 - **การแคช prompt ข้ามกลุ่มฟิลด์ใช้ไม่ได้จริง** — การดึงข้อมูลแบ่งเป็น 6 กลุ่ม
@@ -166,7 +173,17 @@ against the source, not just something to take on faith.
 
 ## Known limitations (v0.1)
 
-- **No OCR** — fully scanned PDFs are not supported; the document needs a real text layer
+- **Scanned PDFs are supported via vision OCR** — a page with no text layer is rendered
+  as an image and sent directly to a vision-capable model, rather than being rejected
+  outright (verified live against a real 16-page scanned document on Anthropic). Requires
+  a vision-capable provider (Anthropic/OpenAI/Gemini always qualify; `openai_compat`
+  needs an explicit `TOR_OPENAI_COMPAT_VISION=1` opt-in, since there's no reliable way to
+  auto-detect whether an endpoint actually reads the image or silently ignores it). A
+  document with too many scanned pages or too large a combined image payload is rejected
+  clearly (422) rather than having pages silently dropped.
+- **Word (.docx) is supported** alongside PDF — citations use a paragraph/table-cell
+  locator instead of a page number (Word files have no real page count), verified against
+  a real local-government TOR document.
 - **PDF highlighting is best-effort**, matched against pdf.js's text layer rather than
   true bounding-box coordinates — unusually segmented text may highlight incompletely
 - **Cross-group prompt caching doesn't actually work** — extraction is split into 6

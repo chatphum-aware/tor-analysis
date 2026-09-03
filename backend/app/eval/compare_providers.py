@@ -108,7 +108,12 @@ def run_eval_for_provider(provider_name: str, model: str, base_url: str | None) 
         document_text = ingested.document_text
         try:
             run = extract(
-                document_text=document_text, provider=provider, model=model, groups=FIELD_GROUPS
+                document_text=document_text,
+                provider=provider,
+                model=model,
+                groups=FIELD_GROUPS,
+                document_kind=ingested.meta.document_kind,
+                images=ingested.images,
             )
         except (ExtractionValidationError, ProviderError) as exc:
             print(f"    CRASHED: {exc}", file=sys.stderr)
