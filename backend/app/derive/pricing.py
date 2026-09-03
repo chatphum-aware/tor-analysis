@@ -40,9 +40,18 @@ _PRICE_PER_MTOK_USD: dict[tuple[str, str], tuple[float, float]] = {
     ("gemini", "gemini-3.6-flash"): (0.75, 3.75),
 }
 
-# Prompt caching multipliers, relative to the model's input rate.
-_CACHE_WRITE_MULTIPLIER = 1.25
-_CACHE_READ_MULTIPLIER = 0.10
+# Prompt caching multipliers, relative to the model's input rate. Keyed by
+# provider because these ratios are provider-specific pricing facts, not a
+# universal law -- confirmed only for Anthropic's own pricing page. Applying
+# Anthropic's ratios to another provider's cache tokens would be a guess this
+# project's pricing rules forbid, so an unverified provider gets (1.0, 1.0):
+# its cache tokens are priced at the plain input rate rather than an invented
+# discount/markup.
+_CACHE_MULTIPLIERS: dict[str, tuple[float, float]] = {
+    # provider: (cache_write_multiplier, cache_read_multiplier)
+    "anthropic": (1.25, 0.10),
+}
+_DEFAULT_CACHE_MULTIPLIERS = (1.0, 1.0)
 
 _DEFAULT_USD_THB_RATE = 36.50
 _DEFAULT_USD_THB_RATE_DATE = "2026-08-28"
@@ -88,11 +97,12 @@ def compute_cost(provider: str, model: str, usage: Usage) -> Cost | None:
     if prices is None:
         return None
     input_rate, output_rate = prices
+    cache_write_mult, cache_read_mult = _CACHE_MULTIPLIERS.get(provider, _DEFAULT_CACHE_MULTIPLIERS)
 
     usd = (
         usage.input_tokens * input_rate
-        + usage.cache_write_tokens * input_rate * _CACHE_WRITE_MULTIPLIER
-        + usage.cached_read_tokens * input_rate * _CACHE_READ_MULTIPLIER
+        + usage.cache_write_tokens * input_rate * cache_write_mult
+        + usage.cached_read_tokens * input_rate * cache_read_mult
     ) / 1_000_000
     usd += usage.output_tokens * output_rate / 1_000_000
 

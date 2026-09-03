@@ -16,7 +16,12 @@ from app.config import api_key_for_provider, load_config
 from app.derive.calculations import assemble_document
 from app.llm.client import ExtractionValidationError, extract as llm_extract
 from app.llm.groups import FIELD_GROUPS, apply_group_overrides
-from app.llm.providers.base import ProviderAPIError, ProviderAuthError, ProviderRateLimitError
+from app.llm.providers.base import (
+    ProviderAPIError,
+    ProviderAuthError,
+    ProviderRateLimitError,
+    ProviderUnsupportedError,
+)
 from app.llm.providers.registry import get_provider
 from app.models.schema import TORDocument
 from app.pdf.extract import build_document_text, extract_document_from_bytes
@@ -61,12 +66,34 @@ async def extract_endpoint(file: UploadFile = File(...)) -> TORDocument:
     groups = apply_group_overrides(FIELD_GROUPS, config.group_overrides)
 
     def _provider_for(name: str, override_model: str):
-        # An override's base_url only applies when it names the SAME
-        # provider as the document default (e.g. a local openai_compat
-        # endpoint overriding one group's model); a different provider
-        # gets its own key but no base_url override.
-        base_url = config.provider_base_url if name == config.provider else None
+        # The one configured base_url is meant for whichever provider actually
+        # needs it: either the document default itself, or an openai_compat
+        # override naming a different provider than the default -- openai_compat
+        # is the only provider that hard-requires a base_url to construct at
+        # all, so withholding it there (just because the override's name
+        # differs from the document default) would make that override
+        # combination permanently fail.
+        base_url = config.provider_base_url if name in (config.provider, "openai_compat") else None
         return get_provider(name, api_key=api_key_for_provider(name), base_url=base_url, model=override_model)
+
+    def _run_extraction():
+        # Provider construction (including openai_compat's synchronous HTTP
+        # capability probe) must happen inside the worker thread too -- built
+        # as an argument to run_in_threadpool, it would run on the asyncio
+        # event loop instead and block every other concurrent request.
+        provider = get_provider(
+            config.provider,
+            api_key=config.api_key,
+            base_url=config.provider_base_url,
+            model=config.model,
+        )
+        return llm_extract(
+            document_text=document_text,
+            provider=provider,
+            model=config.model,
+            groups=groups,
+            provider_for=_provider_for,
+        )
 
     try:
         # llm_extract is a blocking (sync) call chain -- offload to a worker
@@ -77,19 +104,7 @@ async def extract_endpoint(file: UploadFile = File(...)) -> TORDocument:
         # client already got a 504. Acceptable for v0.1's single-user local
         # use; a real cancellation path is future work, not built here.
         run = await asyncio.wait_for(
-            run_in_threadpool(
-                llm_extract,
-                document_text=document_text,
-                provider=get_provider(
-                    config.provider,
-                    api_key=config.api_key,
-                    base_url=config.provider_base_url,
-                    model=config.model,
-                ),
-                model=config.model,
-                groups=groups,
-                provider_for=_provider_for,
-            ),
+            run_in_threadpool(_run_extraction),
             timeout=config.extraction_timeout_seconds,
         )
     except asyncio.TimeoutError:
@@ -106,14 +121,17 @@ async def extract_endpoint(file: UploadFile = File(...)) -> TORDocument:
         raise HTTPException(
             status_code=429, detail="ถูกจำกัดอัตราการเรียก API ลองใหม่อีกสักครู่"
         ) from None
+    except ProviderUnsupportedError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from None
     except ProviderAPIError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from None
 
     return assemble_document(
         run.document,
         scan_report=report,
-        provider=config.provider,
+        provider=run.provider,
         model=run.model,
         usage=run.usage,
         duration_ms=run.duration_ms,
+        cost=run.cost,
     )

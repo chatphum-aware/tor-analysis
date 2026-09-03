@@ -57,6 +57,12 @@ from app.config import api_key_for_provider, load_config
 from app.derive.calculations import assemble_document
 from app.derive.pricing import Cost, Usage, compute_cost
 from app.llm.client import ExtractionValidationError, extract
+from app.llm.providers.base import (
+    ProviderAPIError,
+    ProviderAuthError,
+    ProviderRateLimitError,
+    ProviderUnsupportedError,
+)
 from app.llm.providers.registry import get_provider
 from app.llm.groups import FIELD_GROUPS, apply_group_overrides
 from app.pdf.extract import build_document_text, extract_document
@@ -296,7 +302,10 @@ def main(argv: list[str] | None = None) -> int:
     groups = apply_group_overrides(FIELD_GROUPS, config.group_overrides)
 
     def _provider_for(name: str, override_model: str):
-        base_url = config.provider_base_url if name == config.provider else None
+        # openai_compat hard-requires a base_url to construct at all, so an
+        # override naming it must get the one configured base_url even when
+        # it differs from the document default provider.
+        base_url = config.provider_base_url if name in (config.provider, "openai_compat") else None
         return get_provider(name, api_key=api_key_for_provider(name), base_url=base_url, model=override_model)
 
     expected_files = sorted(EXPECTED_DIR.glob("*.json"))
@@ -330,17 +339,24 @@ def main(argv: list[str] | None = None) -> int:
                 groups=groups,
                 provider_for=_provider_for,
             )
-        except ExtractionValidationError as exc:
+        except (
+            ExtractionValidationError,
+            ProviderAuthError,
+            ProviderRateLimitError,
+            ProviderAPIError,
+            ProviderUnsupportedError,
+        ) as exc:
             print(f"  ERROR: {sample_id} failed extraction: {exc}", file=sys.stderr)
             continue
 
         doc = assemble_document(
             run.document,
             scan_report=result.scan_report,
-            provider=config.provider,
+            provider=run.provider,
             model=run.model,
             usage=run.usage,
             duration_ms=run.duration_ms,
+            cost=run.cost,
         )
         actual = json.loads(doc.model_dump_json(exclude={"extraction_meta"}))
 

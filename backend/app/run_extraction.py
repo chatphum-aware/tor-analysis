@@ -67,7 +67,10 @@ def main(argv: list[str] | None = None) -> int:
     groups = apply_group_overrides(FIELD_GROUPS, config.group_overrides)
 
     def _provider_for(name: str, override_model: str):
-        base_url = config.provider_base_url if name == config.provider else None
+        # openai_compat hard-requires a base_url to construct at all, so an
+        # override naming it must get the one configured base_url even when
+        # it differs from the document default provider.
+        base_url = config.provider_base_url if name in (config.provider, "openai_compat") else None
         return get_provider(name, api_key=api_key_for_provider(name), base_url=base_url, model=override_model)
 
     try:
@@ -97,10 +100,11 @@ def main(argv: list[str] | None = None) -> int:
     doc = assemble_document(
         run.document,
         scan_report=report,
-        provider=config.provider,
+        provider=run.provider,
         model=run.model,
         usage=run.usage,
         duration_ms=run.duration_ms,
+        cost=run.cost,
     )
 
     OUTPUTS_DIR.mkdir(exist_ok=True)

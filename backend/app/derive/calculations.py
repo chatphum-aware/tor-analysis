@@ -28,6 +28,14 @@ from app.thai.numbers import thai_number_words_to_int
 _BE_YEAR_RE = re.compile(r"(24|25|26)\d{2}")  # a 4-digit BE year, modern range
 _AMOUNT_TOLERANCE = 1.0  # baht -- forgives cents/rounding noise in OCR'd/typed amounts
 
+# Sentinel distinguishing "caller didn't pass a cost" (compute it here, as
+# before) from "caller passed cost=None" (a mixed-provider run's real,
+# already-computed answer of "genuinely unpriceable" -- see llm/client.py).
+# A caller that only has a single (provider, model) string, like every
+# existing call site before Task 9's fix, never has this problem: passing
+# nothing preserves their exact prior behavior unchanged.
+_UNSET_COST = object()
+
 
 def convert_be_date_to_ce(date_be: str) -> str | None:
     """"2569-03-15" -> "2026-03-15". Falls back to a bare year-substitution
@@ -93,6 +101,7 @@ def assemble_document(
     usage: Usage,
     duration_ms: int,
     extracted_at: datetime | None = None,
+    cost: Cost | None = _UNSET_COST,  # type: ignore[assignment]
 ) -> TORDocument:
     derived_flags: list[RiskFlag] = []
     for label, field in (
@@ -106,7 +115,8 @@ def assemble_document(
         if flag:
             derived_flags.append(flag)
 
-    cost: Cost | None = compute_cost(provider, model, usage)
+    if cost is _UNSET_COST:
+        cost = compute_cost(provider, model, usage)
     if cost is None:
         # rule: never guess a price for a (provider, model) we don't have pricing for
         cost = Cost(

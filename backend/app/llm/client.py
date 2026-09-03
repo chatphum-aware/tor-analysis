@@ -21,9 +21,9 @@ from typing import Callable
 
 from pydantic import BaseModel, ValidationError
 
-from app.derive.pricing import Usage
+from app.derive.pricing import Cost, Usage, compute_cost
 from app.llm.groups import SHARED_RULES, FieldGroup
-from app.llm.providers.base import LLMProvider, SystemBlock
+from app.llm.providers.base import LLMProvider, ProviderAPIError, SystemBlock
 from app.models.schema import TORDocumentExtracted
 
 MAX_TOKENS = 8_000  # per group call -- each group covers a small schema slice
@@ -52,7 +52,9 @@ class ExtractionRunResult:
     document: TORDocumentExtracted
     usage: Usage
     duration_ms: int
+    provider: str
     model: str
+    cost: Cost | None
 
 
 def _extract_one_group(
@@ -93,7 +95,11 @@ def _extract_one_group(
                 model=model,
                 max_tokens=MAX_TOKENS,
             )
-        except ValidationError as exc:
+        except (ValidationError, ProviderAPIError) as exc:
+            # A reasoning model can exhaust MAX_TOKENS on internal reasoning
+            # before ever emitting JSON (ProviderAPIError from an empty/
+            # truncated response) -- that's just as retryable as a schema
+            # violation under rule #5, not a hard failure on attempt 1.
             last_error = exc
             continue
 
@@ -129,7 +135,7 @@ def extract(
     merged: dict = {}
     total_usage = Usage(0, 0, 0, 0)
     total_duration_ms = 0
-    models_used: set[str] = set()
+    usage_by_pair: dict[tuple[str, str], Usage] = {}
 
     for group in groups:
         group_model = group.model or model
@@ -141,7 +147,6 @@ def extract(
                     f"provider_for resolver was supplied"
                 )
             group_provider = provider_for(group.provider, group_model)
-        models_used.add(f"{group_provider.name}/{group_model}")
 
         parsed, usage, duration_ms = _extract_one_group(
             group_provider, document_text=document_text, model=group_model, group=group
@@ -153,11 +158,53 @@ def extract(
         total_usage.cached_read_tokens += usage.cached_read_tokens
         total_duration_ms += duration_ms
 
+        pair = (group_provider.name, group_model)
+        pair_usage = usage_by_pair.setdefault(pair, Usage(0, 0, 0, 0))
+        pair_usage.input_tokens += usage.input_tokens
+        pair_usage.output_tokens += usage.output_tokens
+        pair_usage.cache_write_tokens += usage.cache_write_tokens
+        pair_usage.cached_read_tokens += usage.cached_read_tokens
+
     document = TORDocumentExtracted.model_validate(merged)
-    # If every group used the same provider/model, report it plainly; a mixed
-    # run (per-group override in play) is labelled honestly rather than
-    # misreporting the document-level default as if it applied everywhere.
-    reported_model = model if len(models_used) <= 1 else ",".join(sorted(models_used))
+
+    # Report the (provider, model) pair(s) actually used -- never fall back to
+    # the document-level default just because the used-pairs set happens to
+    # collapse to one value, since that one value can be a non-default
+    # override that doesn't match the default at all.
+    pairs = sorted(usage_by_pair)
+    if len(pairs) == 1:
+        reported_provider, reported_model = pairs[0]
+        cost = compute_cost(reported_provider, reported_model, total_usage)
+    else:
+        # A genuinely mixed run has no single (provider, model) a pricing
+        # lookup can key on -- reporting it as the document default would
+        # silently misattribute cost to a provider that may not have run at
+        # all. Sum each pair's own real cost instead of guessing; if any
+        # pair lacks pricing data, the honest total is unknown too (same
+        # never-guess principle as compute_cost's own single-pair case).
+        reported_provider = "mixed"
+        reported_model = ",".join(f"{p}/{m}" for p, m in pairs)
+        pair_costs = [compute_cost(p, m, usage_by_pair[(p, m)]) for p, m in pairs]
+        if any(c is None for c in pair_costs):
+            cost = None
+        else:
+            first = pair_costs[0]
+            cost = Cost(
+                usd=round(sum(c.usd for c in pair_costs), 6),
+                thb=round(sum(c.thb for c in pair_costs), 4),
+                usd_thb_rate=first.usd_thb_rate,
+                rate_source_date=first.rate_source_date,
+                provider=reported_provider,
+                model=reported_model,
+                pricing_as_of=first.pricing_as_of,
+                is_estimate=True,
+            )
+
     return ExtractionRunResult(
-        document=document, usage=total_usage, duration_ms=total_duration_ms, model=reported_model
+        document=document,
+        usage=total_usage,
+        duration_ms=total_duration_ms,
+        provider=reported_provider,
+        model=reported_model,
+        cost=cost,
     )

@@ -35,9 +35,13 @@
 - **โมเดลราคาถูก (เช่น Haiku) มีโอกาสอนุมาน/คำนวณค่าที่เอกสารไม่ได้เขียนไว้ตรง ๆ**
   ในบางฟิลด์ (พบจากการทำ eval จริง แก้ทีละจุดที่เจอแล้ว แต่ไม่รับประกันว่าจะไม่เจอฟิลด์ใหม่
   เมื่อทดสอบเอกสารหลากหลายขึ้น) — ดูผลการทดสอบใน [หัวข้อ "การประเมินผล"](#การประเมินผล)
-- ยังไม่รองรับผู้ให้บริการ LLM รายอื่น (OpenAI, Gemini, Llama ฯลฯ) — รองรับเฉพาะ Claude
-  (Anthropic) เท่านั้นในตอนนี้ เพราะโครงสร้างปัจจุบันผูกกับ structured-output/prompt-caching
-  ของ Anthropic โดยตรง
+- **รองรับหลาย LLM provider แล้ว** (Anthropic, OpenAI, Gemini, และ OpenAI-compatible
+  endpoint ใด ๆ เช่น Ollama/vLLM/Groq/OpenRouter สำหรับ Llama/Qwen ฯลฯ — ดูตัวแปร
+  `TOR_PROVIDER` ใน `.env.example`) แต่ **ผ่านการทดสอบจริงในระดับต่างกัน**: Anthropic
+  ผ่านครบทุกเอกสารทดสอบไม่มี crash เลย ส่วน provider อื่นมี adapter ที่ผ่าน unit test
+  ครบแล้วแต่ eval แบบเต็มยังติดปัญหาเรื่อง account/quota ของผู้ทดสอบเอง (ไม่ใช่บั๊กโค้ด) —
+  โมเดล reasoning บางตัวผ่าน OpenAI-compatible endpoint ยังมีข้อจำกัดจริงที่พบระหว่างทดสอบ
+  ด้วย (token budget, rate limit) ดู [หัวข้อ "การประเมินผล"](#การประเมินผล)
 
 ## การติดตั้งและรัน
 
@@ -66,8 +70,11 @@ npm run dev   # เปิดที่ http://localhost:5173
 
 | ตัวแปร | ความหมาย |
 |---|---|
-| `ANTHROPIC_API_KEY` | API key ของคุณเอง (จำเป็น) |
+| `TOR_PROVIDER` | provider ที่จะใช้: `anthropic` (default) \| `openai` \| `gemini` \| `openai_compat` |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` / `TOR_PROVIDER_API_KEY` | API key ของคุณเอง — ชื่อตัวแปรขึ้นกับ `TOR_PROVIDER` ที่เลือก (จำเป็น) |
+| `TOR_PROVIDER_BASE_URL` | ใช้เฉพาะ `TOR_PROVIDER=openai_compat` — base URL ของ endpoint (Ollama/vLLM/Groq/OpenRouter ฯลฯ) |
 | `TOR_MODEL` | โมเดลที่ใช้สกัดข้อมูล (แนะนำ `claude-opus-5` สำหรับผลลัพธ์จริง, `claude-haiku-4-5`/`claude-sonnet-5` สำหรับพัฒนา/ทดสอบ) |
+| `TOR_GROUP_<GROUP>` | (optional) สั่งให้ field group หนึ่งใช้ provider/model ต่างจากค่า default เช่น `TOR_GROUP_QUALIFICATIONS=anthropic:claude-opus-5` |
 | `USD_THB_RATE`, `USD_THB_RATE_DATE` | อัตราแลกเปลี่ยนสำหรับแสดงค่าใช้จ่ายเป็นบาท (ต้องอัปเดตเองเป็นระยะ) |
 | `MAX_UPLOAD_MB` | ขนาดไฟล์อัปโหลดสูงสุด |
 | `CORS_ORIGINS` | origin ของ frontend ที่อนุญาต |
@@ -104,6 +111,16 @@ ANTHROPIC_API_KEY=... python -m app.eval.run_eval --model claude-opus-5
 (รายงานเป็นจำนวนนับ ไม่ใช่ % เพราะ n=3 เอกสารน้อยเกินกว่าจะอ้างเปอร์เซ็นต์ได้อย่างซื่อสัตย์)
 ผลล่าสุด (claude-opus-5, หลังแก้บั๊กที่เจอระหว่างทำ eval): 185/215 ฟิลด์ตรงเป๊ะ, 0 missed —
 ดูรายละเอียดและบั๊กที่เจอ+แก้แล้วทั้งหมดใน `PROGRESS.md`
+
+**เปรียบเทียบข้าม provider**: `python -m app.eval.compare_providers --eval --provider <p1>
+--model <m1> --provider <p2> --model <m2> ...` (มีโหมด `--check-schema-ceiling` สำหรับเช็ค
+เร็ว ๆ ว่า provider ตอบ schema แต่ละกลุ่มได้ไหม ก่อนรัน eval เต็ม) ผลล่าสุด: `anthropic`
+(claude-haiku-4-5) ผ่านครบ 3 เอกสาร 195/215 ตรงเป๊ะ (91%) ไม่มี crash เลย ค่าใช้จ่าย $0.6177
+ส่วน self-hosted/OpenAI-compatible model บางตัว (ทดสอบกับ `openai/gpt-oss-120b` ผ่าน Groq)
+มีข้อจำกัดจริงที่พบระหว่างทดสอบ — token budget ไม่พอสำหรับ reasoning model, ไม่ยอมใส่ reason
+ตอนค่าเป็น null (ผ่าน JSON schema แต่ไม่ผ่านกฎภายในของโปรเจกต์), และ rate limit ของ free tier
+ต่ำเกินไปสำหรับเอกสารจริงที่ยาว — ดู `PROGRESS.md` และ `docs/plans/2026-09-02-multi-provider-
+migration.md` สำหรับรายละเอียดทั้งหมด
 
 ## License
 
@@ -161,9 +178,14 @@ against the source, not just something to take on faith.
   document never actually states**, in specific fields (found via real eval runs, fixed
   as found, but not guaranteed to be fully closed off against new documents) — see
   [Evaluation](#evaluation) for the latest numbers.
-- No support yet for other LLM providers (OpenAI, Gemini, Llama, etc.) — Claude
-  (Anthropic) only for now, since the current design is tied directly to Anthropic's
-  structured-output and prompt-caching APIs.
+- **Multiple LLM providers are supported** (Anthropic, OpenAI, Gemini, and any
+  OpenAI-compatible endpoint — Ollama/vLLM/Groq/OpenRouter, etc., for Llama/Qwen and other
+  self-hosted models — see `TOR_PROVIDER` in `.env.example`), but **verified to different
+  degrees**: Anthropic has completed every test document with zero crashes; the other
+  adapters pass their unit tests but a full eval run hit real account/quota limits on the
+  tester's own accounts (not code bugs) — and one reasoning model tested via an
+  OpenAI-compatible endpoint surfaced genuine limitations of its own (token budget, rate
+  limits) — see [Evaluation](#evaluation).
 
 ## Setup
 
@@ -192,8 +214,11 @@ See `.env.example` for the full list. Key ones:
 
 | Variable | Meaning |
 |---|---|
-| `ANTHROPIC_API_KEY` | Your own API key (required) |
+| `TOR_PROVIDER` | Which provider to use: `anthropic` (default) \| `openai` \| `gemini` \| `openai_compat` |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` / `TOR_PROVIDER_API_KEY` | Your own API key — the variable name depends on `TOR_PROVIDER` (required) |
+| `TOR_PROVIDER_BASE_URL` | Only for `TOR_PROVIDER=openai_compat` — the endpoint's base URL (Ollama/vLLM/Groq/OpenRouter, etc.) |
 | `TOR_MODEL` | Extraction model (`claude-opus-5` recommended for real results, `claude-haiku-4-5`/`claude-sonnet-5` for dev/testing) |
+| `TOR_GROUP_<GROUP>` | (optional) run one field group on a different provider/model than the default, e.g. `TOR_GROUP_QUALIFICATIONS=anthropic:claude-opus-5` |
 | `USD_THB_RATE`, `USD_THB_RATE_DATE` | Exchange rate for displaying cost in baht (update periodically) |
 | `MAX_UPLOAD_MB` | Max upload file size |
 | `CORS_ORIGINS` | Allowed frontend origin(s) |
@@ -230,6 +255,17 @@ Produces a markdown table scoring each field as exact / wrong / missed / halluci
 (reported as raw counts, not percentages — n=3 documents is too small to honestly claim a
 %). Latest result (claude-opus-5, after fixing the bugs found during eval): 185/215 fields
 exact, 0 missed — see `PROGRESS.md` for the full list of bugs found and fixed along the way.
+
+**Cross-provider comparison**: `python -m app.eval.compare_providers --eval --provider <p1>
+--model <m1> --provider <p2> --model <m2> ...` (also has a `--check-schema-ceiling` mode for
+a quick sanity check of whether a provider can answer each group's schema before running the
+full eval). Latest result: `anthropic` (claude-haiku-4-5) completed all 3 documents cleanly
+at 195/215 exact (91%), zero crashes, $0.6177. A self-hosted/OpenAI-compatible model tested
+via Groq (`openai/gpt-oss-120b`) surfaced real limitations worth knowing about before relying
+on this path: insufficient token budget for a reasoning model, a tendency to satisfy the JSON
+schema's `required` constraint without satisfying this project's own null-needs-a-reason rule,
+and a free-tier rate limit too low for our longer real documents — see `PROGRESS.md` and
+`docs/plans/2026-09-02-multi-provider-migration.md` for full detail.
 
 ## License
 

@@ -63,12 +63,27 @@ class AnthropicProvider:
             raise ProviderAuthError(str(exc)) from exc
         except anthropic.RateLimitError as exc:
             raise ProviderRateLimitError(str(exc)) from exc
+        except anthropic.APIConnectionError as exc:
+            # Sibling of APIStatusError (both under APIError), not a subclass --
+            # covers network blips and APITimeoutError (its own subclass), neither
+            # of which the APIStatusError catch below would ever see.
+            raise ProviderAPIError(f"anthropic API error: {exc}") from exc
         except anthropic.APIStatusError as exc:
             raise ProviderAPIError(f"anthropic API error: {exc.message}") from exc
 
+        parsed = response.parsed_output
+        if parsed is None:
+            # A truncated/max-tokens-cut response. Raise rather than let a
+            # None flow into client.py's parsed.model_dump() as an
+            # AttributeError -- this needs to trigger rule #5's retry.
+            raise ProviderAPIError(
+                f"anthropic returned no parsed output for model {model} "
+                f"(stop_reason={response.stop_reason})"
+            )
+
         raw = response.usage
         return ProviderResult(
-            parsed=response.parsed_output,
+            parsed=parsed,
             usage=ProviderUsage(
                 input_tokens=raw.input_tokens,
                 output_tokens=raw.output_tokens,

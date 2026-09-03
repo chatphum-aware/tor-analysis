@@ -166,6 +166,10 @@ class OpenAICompatProvider:
             raise ProviderAuthError(str(exc)) from exc
         except openai.RateLimitError as exc:
             raise ProviderRateLimitError(str(exc)) from exc
+        except openai.APIConnectionError as exc:
+            # Sibling of APIStatusError (both under APIError), not a subclass --
+            # covers network blips and APITimeoutError (its own subclass).
+            raise ProviderAPIError(f"openai_compat API error: {exc}") from exc
         except openai.APIStatusError as exc:
             raise ProviderAPIError(f"openai_compat API error: {exc}") from exc
 
