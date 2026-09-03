@@ -1,15 +1,12 @@
 import { Fragment, type ReactNode } from "react";
 
+import { formatLocator, isSameSource } from "../lib/sourceLocator";
 import type { Sourced, Source, TORDocument } from "../types/schema";
 
 interface ResultTableProps {
   doc: TORDocument;
   selectedSource: Source | null;
   onSelectSource: (source: Source) => void;
-}
-
-function isSameSource(a: Source | null, b: Source | null): boolean {
-  return a !== null && b !== null && a.page === b.page && a.quote === b.quote;
 }
 
 function ConfidenceBadge({ confidence }: { confidence: Sourced<unknown>["confidence"] }) {
@@ -50,7 +47,7 @@ function SourcedRow({
       <td>
         <ConfidenceBadge confidence={sourced.confidence} />
       </td>
-      <td className="field-label">{clickable ? `หน้า ${sourced.source!.page}` : ""}</td>
+      <td className="field-label">{clickable ? formatLocator(sourced.source) : ""}</td>
     </tr>
   );
 }
@@ -205,7 +202,7 @@ export function ResultTable({ doc, selectedSource, onSelectSource }: ResultTable
             >
               <span className="risk-flag-origin">{flag.origin === "model" ? "พบในเอกสาร" : "ตรวจพบโดยระบบ"}</span>
               {flag.text}
-              {flag.source && <span className="field-label"> (หน้า {flag.source.page})</span>}
+              {flag.source && <span className="field-label"> ({formatLocator(flag.source)})</span>}
             </div>
           ))}
         </section>

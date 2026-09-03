@@ -5,12 +5,13 @@ from app.derive.calculations import (
     convert_be_date_to_ce,
 )
 from app.derive.pricing import Usage
+from app.ingest.pdf_ingest import ingest_meta_from_scan_report
 from app.models.schema import BondInfo, Source, Sourced, TORDocumentExtracted
 from app.pdf.scanned import DocumentScanReport, PageReport
 
 
 def s(value, page=1, quote="q", confidence="high"):
-    return Sourced(value=value, source=Source(page=page, quote=quote), confidence=confidence)
+    return Sourced(value=value, source=Source(kind="text_page", page=page, quote=quote), confidence=confidence)
 
 
 def null(reason="ไม่พบ", confidence="low"):
@@ -127,7 +128,7 @@ def test_assemble_document_end_to_end():
 
     doc = assemble_document(
         extracted,
-        scan_report=scan_report,
+        ingest_meta=ingest_meta_from_scan_report(scan_report),
         provider="anthropic",
         model="claude-haiku-4-5",
         usage=usage,

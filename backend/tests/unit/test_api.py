@@ -6,6 +6,7 @@ from app.main import app
 from tests.unit.test_calculations import _minimal_extracted
 from app.derive.calculations import assemble_document
 from app.derive.pricing import Usage
+from app.ingest.pdf_ingest import ingest_meta_from_scan_report
 from app.pdf.scanned import DocumentScanReport, PageReport
 
 client = TestClient(app)
@@ -44,13 +45,70 @@ def test_extract_oversized_file_returns_413(monkeypatch):
     assert resp.status_code == 413
 
 
-def test_extract_invalid_pdf_returns_400(monkeypatch):
+def test_extract_unrecognized_format_returns_415(monkeypatch):
+    """Bytes matching no known magic number are a format problem (415), not a
+    corrupt-PDF problem (400) -- the filename claiming ".pdf" is not evidence,
+    since dispatch is by magic bytes (see app/ingest/detect.py)."""
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test-fake-key")
     resp = client.post(
         "/api/extract", files={"file": ("test.pdf", b"this is not a pdf", "application/pdf")}
     )
+    assert resp.status_code == 415
+    assert "PDF" in resp.json()["detail"]
+
+
+def test_extract_corrupt_but_pdf_shaped_file_returns_400(monkeypatch):
+    """Has the %PDF magic, so it dispatches to the PDF ingestor and fails
+    there -- that IS a 400, and must not be swallowed by the 415 path."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test-fake-key")
+    resp = client.post(
+        "/api/extract",
+        files={"file": ("test.pdf", b"%PDF-1.7\ntruncated garbage", "application/pdf")},
+    )
     assert resp.status_code == 400
     assert "PDF" in resp.json()["detail"]
+
+
+def test_extract_xlsx_returns_415_while_gated_off(monkeypatch):
+    """XLSX ingestion exists but is disabled (no real Thai gov TOR found in
+    .xlsx -- see app/ingest/dispatch.py). It must say which format it
+    recognized rather than claiming the file is unreadable."""
+    import io
+    import zipfile
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test-fake-key")
+    monkeypatch.delenv("TOR_ENABLE_XLSX", raising=False)
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("xl/workbook.xml", "<workbook/>")
+    resp = client.post(
+        "/api/extract",
+        files={"file": ("t.xlsx", buf.getvalue(), "application/octet-stream")},
+    )
+    assert resp.status_code == 415
+    assert "XLSX" in resp.json()["detail"]
+
+
+def test_extract_docx_is_accepted_and_reaches_extraction(monkeypatch):
+    """DOCX is supported (real Thai gov TORs circulate in this format), so a
+    valid one must get past format dispatch. The fake key then fails the LLM
+    call with a 500 -- which is proof it reached extraction rather than being
+    rejected as a bad format."""
+    import io
+
+    from docx import Document
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test-fake-key")
+    doc = Document()
+    doc.add_paragraph("1. ความเป็นมา")
+    buf = io.BytesIO()
+    doc.save(buf)
+    resp = client.post(
+        "/api/extract",
+        files={"file": ("tor.docx", buf.getvalue(), "application/octet-stream")},
+    )
+    assert resp.status_code not in (400, 415), resp.json()
+    assert resp.status_code == 500  # fake key rejected downstream
 
 
 def test_extract_scanned_file_returns_422_without_calling_api(monkeypatch):
@@ -78,7 +136,7 @@ def test_export_csv_returns_csv_content_type():
     )
     doc = assemble_document(
         extracted,
-        scan_report=scan_report,
+        ingest_meta=ingest_meta_from_scan_report(scan_report),
         provider="anthropic",
         model="claude-haiku-4-5",
         usage=Usage(input_tokens=1, output_tokens=1),

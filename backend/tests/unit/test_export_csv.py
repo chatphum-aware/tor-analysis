@@ -1,6 +1,7 @@
 from app.api.export import flatten_to_rows
 from app.derive.calculations import assemble_document
 from app.derive.pricing import Usage
+from app.ingest.pdf_ingest import ingest_meta_from_scan_report
 from app.models.schema import Source, Sourced
 from app.pdf.scanned import DocumentScanReport, PageReport
 from tests.unit.test_calculations import _minimal_extracted
@@ -14,7 +15,7 @@ def _build_doc():
     )
     return assemble_document(
         extracted,
-        scan_report=scan_report,
+        ingest_meta=ingest_meta_from_scan_report(scan_report),
         provider="anthropic",
         model="claude-haiku-4-5",
         usage=Usage(input_tokens=10, output_tokens=10),
@@ -58,6 +59,16 @@ def test_flatten_null_field_has_empty_value_and_a_reason():
 def test_flatten_all_rows_have_every_column():
     doc = _build_doc()
     rows = flatten_to_rows(doc)
-    expected_cols = {"section", "index", "field", "value", "page", "quote", "confidence", "reason"}
+    expected_cols = {
+        "section",
+        "index",
+        "field",
+        "value",
+        "locator_kind",
+        "locator",
+        "quote",
+        "confidence",
+        "reason",
+    }
     for row in rows:
         assert set(row.keys()) == expected_cols

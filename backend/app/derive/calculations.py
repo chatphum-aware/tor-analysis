@@ -18,10 +18,11 @@ from app.models.schema import (
     KeyDateExtracted,
     RiskFlag,
     Sourced,
+    SourcePreview,
     TORDocument,
     TORDocumentExtracted,
 )
-from app.pdf.scanned import DocumentScanReport
+from app.ingest.base import IngestMeta
 from app.thai.normalize import be_to_ce
 from app.thai.numbers import thai_number_words_to_int
 
@@ -95,13 +96,14 @@ def _to_key_date(kd: KeyDateExtracted) -> KeyDate:
 def assemble_document(
     extracted: TORDocumentExtracted,
     *,
-    scan_report: DocumentScanReport,
+    ingest_meta: IngestMeta,
     provider: str,
     model: str,
     usage: Usage,
     duration_ms: int,
     extracted_at: datetime | None = None,
     cost: Cost | None = _UNSET_COST,  # type: ignore[assignment]
+    source_preview: SourcePreview | None = None,
 ) -> TORDocument:
     derived_flags: list[RiskFlag] = []
     for label, field in (
@@ -153,9 +155,12 @@ def assemble_document(
         risk_flags=[*extracted.risk_flags, *derived_flags],
         contact=extracted.contact,
         extraction_meta=ExtractionMeta(
-            page_count=scan_report.page_count,
-            usable_text_page_ratio=round(scan_report.usable_text_ratio, 4),
-            image_only_pages=[p.page_number for p in scan_report.pages if p.status == "image_only"],
+            document_kind=ingest_meta.document_kind,
+            page_count=ingest_meta.page_count,
+            usable_text_page_ratio=ingest_meta.usable_text_page_ratio,
+            image_only_pages=ingest_meta.image_only_pages,
+            paragraph_count=ingest_meta.paragraph_count,
+            sheet_names=ingest_meta.sheet_names,
             provider=provider,
             model=model,
             pricing_as_of=cost.pricing_as_of,
@@ -175,4 +180,5 @@ def assemble_document(
                 is_estimate=cost.is_estimate,
             ),
         ),
+        source_preview=source_preview,
     )

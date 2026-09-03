@@ -20,14 +20,14 @@ from app.llm.client import ExtractionValidationError, extract
 from app.llm.groups import FIELD_GROUPS, apply_group_overrides
 from app.llm.providers.base import ProviderAPIError, ProviderAuthError, ProviderRateLimitError
 from app.llm.providers.registry import get_provider
-from app.pdf.extract import build_document_text, extract_document
+from app.ingest.dispatch import ingest_path
 
 OUTPUTS_DIR = Path(__file__).resolve().parent.parent / "outputs"
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("pdf_path")
+    parser.add_argument("doc_path", help="path to a PDF or XLSX file")
     parser.add_argument("--model", default=None, help="override TOR_MODEL env var")
     args = parser.parse_args(argv)
 
@@ -42,11 +42,11 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
 
-    print(f"กำลังดึงข้อความจาก {args.pdf_path} ...")
-    result = extract_document(args.pdf_path)
-    report = result.scan_report
+    print(f"กำลังดึงข้อความจาก {args.doc_path} ...")
+    ingested = ingest_path(args.doc_path)
+    ingest_meta = ingested.meta
 
-    if report.usable_text_ratio == 0.0:
+    if ingest_meta.usable_text_page_ratio == 0.0:  # pdf-only condition
         print(
             "⚠️  เอกสารนี้ไม่มีข้อความให้ดึงเลยแม้แต่หน้าเดียว — "
             "นี่คือไฟล์สแกน ไม่รองรับใน v0.1 (ไม่มี OCR) จะไม่เรียก API",
@@ -54,14 +54,26 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
 
-    print(
-        f"พบข้อความใช้ได้ {report.usable_text_ratio:.0%} ของ {report.page_count} หน้า "
-        f"({len(result.blocks)} text blocks) — กำลังเรียก Claude ({model}) ..."
-    )
-    if report.image_only_pages:
-        print(f"  (หน้าที่ไม่มีข้อความ จะไม่ถูกส่งให้โมเดล: {[p.page_number for p in report.pages if p.status == 'image_only']})")
+    if ingest_meta.document_kind == "pdf":
+        print(
+            f"พบข้อความใช้ได้ {ingest_meta.usable_text_page_ratio:.0%} ของ {ingest_meta.page_count} หน้า "
+            f"({len(ingested.document_text):,} ตัวอักษร) — กำลังเรียก Claude ({model}) ..."
+        )
+    elif ingest_meta.document_kind == "docx":
+        print(
+            f"อ่านไฟล์ DOCX ได้ {ingest_meta.paragraph_count} ย่อหน้า "
+            f"({len(ingested.document_text):,} ตัวอักษร) — กำลังเรียก Claude ({model}) ..."
+        )
+    else:
+        print(
+            f"อ่านไฟล์ {ingest_meta.document_kind.upper()} ได้ "
+            f"{len(ingest_meta.sheet_names or [])} ชีท "
+            f"({len(ingested.document_text):,} ตัวอักษร) — กำลังเรียก Claude ({model}) ..."
+        )
+    if ingest_meta.image_only_pages:
+        print(f"  (หน้าที่ไม่มีข้อความ จะไม่ถูกส่งให้โมเดล: {ingest_meta.image_only_pages})")
 
-    document_text = build_document_text(result.blocks)
+    document_text = ingested.document_text
 
     provider = get_provider(config.provider, api_key=config.api_key, base_url=config.provider_base_url, model=model)
     groups = apply_group_overrides(FIELD_GROUPS, config.group_overrides)
@@ -80,6 +92,7 @@ def main(argv: list[str] | None = None) -> int:
             model=model,
             groups=groups,
             provider_for=_provider_for,
+            document_kind=ingest_meta.document_kind,
         )
     except ExtractionValidationError as exc:
         print(f"error: {exc}", file=sys.stderr)
@@ -99,16 +112,17 @@ def main(argv: list[str] | None = None) -> int:
 
     doc = assemble_document(
         run.document,
-        scan_report=report,
+        ingest_meta=ingest_meta,
         provider=run.provider,
         model=run.model,
         usage=run.usage,
         duration_ms=run.duration_ms,
         cost=run.cost,
+        source_preview=ingested.preview,
     )
 
     OUTPUTS_DIR.mkdir(exist_ok=True)
-    out_path = OUTPUTS_DIR / f"{Path(args.pdf_path).stem}.json"
+    out_path = OUTPUTS_DIR / f"{Path(args.doc_path).stem}.json"
     out_path.write_text(doc.model_dump_json(indent=2, exclude_none=False), encoding="utf-8")
 
     meta = doc.extraction_meta

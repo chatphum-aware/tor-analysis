@@ -12,10 +12,17 @@ export function UploadPane({ onSubmit, isPending, errorMessage }: UploadPaneProp
   return (
     <div className="upload-screen">
       <h2>TOR Analyzer</h2>
-      <p>อัปโหลดเอกสาร TOR / ประกาศประกวดราคา (PDF) เพื่อดึงข้อมูลสำคัญ</p>
+      <p>อัปโหลดเอกสาร TOR / ประกาศประกวดราคา (PDF หรือ Word .docx) เพื่อดึงข้อมูลสำคัญ</p>
       <input
         type="file"
-        accept="application/pdf"
+        // A hint for the file picker only -- the backend decides the real
+        // format from magic bytes (app/ingest/detect.py), never this or the
+        // browser-reported MIME type. XLSX is deliberately absent: the backend
+        // gates it behind TOR_ENABLE_XLSX (see ingest/dispatch.py), so offering
+        // it here would let users pick a file that comes back 415. Add
+        // ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        // when that flag is turned on.
+        accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         onChange={(e) => setFile(e.target.files?.[0] ?? null)}
       />
       <button

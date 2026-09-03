@@ -73,6 +73,17 @@ def _load(filename: str) -> str:
 # Shared cached prefix -- identical across every group call.
 SHARED_RULES = _load("extract_system.md")
 
+# Rule #2's locator format depends on the source document's format, so that
+# part of the prompt is split per kind: a PDF call must never be told about
+# spreadsheet cell refs, and an XLSX call must never be told to cite a page
+# it doesn't have. Also constant across all 6 group calls, so it sits in the
+# cacheable prefix alongside SHARED_RULES.
+SOURCE_KIND_RULES: dict[str, str] = {
+    "pdf": _load("source_kind_pdf.md"),
+    "docx": _load("source_kind_docx.md"),
+    "xlsx": _load("source_kind_xlsx.md"),
+}
+
 FIELD_GROUPS: list[FieldGroup] = [
     FieldGroup("basic_info", BasicInfoGroup, _load("group_basic_info.md")),
     FieldGroup("key_dates", KeyDatesGroup, _load("group_key_dates.md")),

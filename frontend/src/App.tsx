@@ -8,6 +8,9 @@ import { ResultTable } from "./components/ResultTable";
 import { ScannedNotice } from "./components/ScannedNotice";
 import { UploadPane } from "./components/UploadPane";
 import { UsageFooter } from "./components/UsageFooter";
+import { DocxViewer } from "./components/DocxViewer";
+import { XlsxViewer } from "./components/XlsxViewer";
+import { isPageLocator } from "./lib/sourceLocator";
 import type { Source } from "./types/schema";
 
 export function App() {
@@ -60,14 +63,33 @@ export function App() {
         {mutation.data && file && (
           <div className="results-layout">
             <div className="results-pane">
-              <ExportButtons doc={mutation.data} baseName={file.name.replace(/\.pdf$/i, "")} />
+              <ExportButtons
+                doc={mutation.data}
+                baseName={file.name.replace(/\.(pdf|docx|xlsx)$/i, "")}
+              />
               <ResultTable doc={mutation.data} selectedSource={selectedSource} onSelectSource={setSelectedSource} />
             </div>
-            <PdfViewer
-              file={file}
-              targetPage={selectedSource?.page ?? null}
-              targetQuote={selectedSource?.quote ?? null}
-            />
+            {/* Which viewer can verify a citation depends on the source
+                format: a PDF renders from the user's own file, while a
+                spreadsheet renders from the cell grid the backend already
+                parsed (see XlsxViewer). */}
+            {mutation.data.source_preview?.document_kind === "xlsx" ? (
+              <XlsxViewer
+                preview={mutation.data.source_preview}
+                selectedSource={selectedSource}
+              />
+            ) : mutation.data.source_preview?.document_kind === "docx" ? (
+              <DocxViewer
+                preview={mutation.data.source_preview}
+                selectedSource={selectedSource}
+              />
+            ) : (
+              <PdfViewer
+                file={file}
+                targetPage={isPageLocator(selectedSource) ? selectedSource!.page : null}
+                targetQuote={selectedSource?.quote ?? null}
+              />
+            )}
           </div>
         )}
       </div>

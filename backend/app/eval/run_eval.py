@@ -65,7 +65,7 @@ from app.llm.providers.base import (
 )
 from app.llm.providers.registry import get_provider
 from app.llm.groups import FIELD_GROUPS, apply_group_overrides
-from app.pdf.extract import build_document_text, extract_document
+from app.ingest.pdf_ingest import ingest_pdf_path
 
 EXPECTED_DIR = Path(__file__).resolve().parents[2] / "tests" / "expected"
 SAMPLES_DIR = Path(__file__).resolve().parents[2] / "outputs" / "samples"
@@ -329,8 +329,8 @@ def main(argv: list[str] | None = None) -> int:
         expected = json.loads(expected_path.read_text(encoding="utf-8"))
 
         print(f"extracting {sample_id} ({model}) ...")
-        result = extract_document(str(pdf_path))
-        document_text = build_document_text(result.blocks)
+        ingested = ingest_pdf_path(str(pdf_path))
+        document_text = ingested.document_text
         try:
             run = extract(
                 document_text=document_text,
@@ -351,7 +351,7 @@ def main(argv: list[str] | None = None) -> int:
 
         doc = assemble_document(
             run.document,
-            scan_report=result.scan_report,
+            ingest_meta=ingested.meta,
             provider=run.provider,
             model=run.model,
             usage=run.usage,

@@ -40,7 +40,7 @@ from app.llm.client import ExtractionValidationError, extract
 from app.llm.groups import FIELD_GROUPS
 from app.llm.providers.base import ProviderError, SystemBlock
 from app.llm.providers.registry import get_provider
-from app.pdf.extract import build_document_text, extract_document
+from app.ingest.pdf_ingest import ingest_pdf_path
 
 _STUB_DOCUMENT = "[หน้า 1]\nเอกสารทดสอบ ไม่มีเนื้อหาจริง ใช้สำหรับตรวจสอบ schema เท่านั้น\n"
 
@@ -104,8 +104,8 @@ def run_eval_for_provider(provider_name: str, model: str, base_url: str | None) 
             continue
 
         print(f"  extracting {sample_id} ({provider_name}/{model}) ...")
-        result = extract_document(str(pdf_path))
-        document_text = build_document_text(result.blocks)
+        ingested = ingest_pdf_path(str(pdf_path))
+        document_text = ingested.document_text
         try:
             run = extract(
                 document_text=document_text, provider=provider, model=model, groups=FIELD_GROUPS
@@ -117,7 +117,7 @@ def run_eval_for_provider(provider_name: str, model: str, base_url: str | None) 
 
         doc = assemble_document(
             run.document,
-            scan_report=result.scan_report,
+            ingest_meta=ingested.meta,
             provider=provider_name,
             model=run.model,
             usage=run.usage,

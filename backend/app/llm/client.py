@@ -22,7 +22,7 @@ from typing import Callable
 from pydantic import BaseModel, ValidationError
 
 from app.derive.pricing import Cost, Usage, compute_cost
-from app.llm.groups import SHARED_RULES, FieldGroup
+from app.llm.groups import SHARED_RULES, SOURCE_KIND_RULES, FieldGroup
 from app.llm.providers.base import LLMProvider, ProviderAPIError, SystemBlock
 from app.models.schema import TORDocumentExtracted
 
@@ -63,6 +63,7 @@ def _extract_one_group(
     document_text: str,
     model: str,
     group: FieldGroup,
+    source_kind_rules: str,
 ) -> tuple[BaseModel, Usage, int]:
     last_error: Exception | None = None
     for attempt in range(MAX_RETRIES + 1):
@@ -80,6 +81,9 @@ def _extract_one_group(
             )
         system_blocks = [
             SystemBlock(text=SHARED_RULES, cacheable=True),
+            # Constant across all 6 groups like the two blocks around it, so it
+            # doesn't change the measured caching behavior described above.
+            SystemBlock(text=source_kind_rules, cacheable=True),
             SystemBlock(text=document_text, cacheable=True),
             SystemBlock(text=instruction, cacheable=False),
         ]
@@ -125,6 +129,7 @@ def extract(
     model: str,
     groups: list[FieldGroup],
     provider_for: Callable[[str, str], LLMProvider] | None = None,
+    document_kind: str = "pdf",
 ) -> ExtractionRunResult:
     """`provider_for` resolves a group's override (name, model) to a provider
     instance. Required only if some group sets `provider`; a plain
@@ -132,6 +137,15 @@ def extract(
     Takes the model too, not just the provider name -- an openai_compat
     override needs the actual model to run its construction-time capability
     probe against (probing a placeholder model name 404s)."""
+    try:
+        source_kind_rules = SOURCE_KIND_RULES[document_kind]
+    except KeyError:
+        raise ExtractionValidationError(
+            f"no source-locator prompt rules for document kind {document_kind!r} "
+            f"-- refusing to extract without telling the model how to cite "
+            f"this format (rule #2)"
+        ) from None
+
     merged: dict = {}
     total_usage = Usage(0, 0, 0, 0)
     total_duration_ms = 0
@@ -149,7 +163,11 @@ def extract(
             group_provider = provider_for(group.provider, group_model)
 
         parsed, usage, duration_ms = _extract_one_group(
-            group_provider, document_text=document_text, model=group_model, group=group
+            group_provider,
+            document_text=document_text,
+            model=group_model,
+            group=group,
+            source_kind_rules=source_kind_rules,
         )
         merged.update(parsed.model_dump())
         total_usage.input_tokens += usage.input_tokens

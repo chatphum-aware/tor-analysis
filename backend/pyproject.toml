@@ -12,6 +12,15 @@ dependencies = [
     "python-multipart>=0.0.12",
     "pydantic>=2.9",
     "pymupdf>=1.24",
+    # MIT (verified against PyPI 2026-09-03) -- compatible with this
+    # project's AGPL-3.0, which is forced by PyMuPDF. Reads XLSX uploads.
+    "openpyxl>=3.1,<4.0",
+    # MIT (verified against PyPI 2026-09-03). Reads DOCX uploads. Note the
+    # body-order caveat that shaped docx_ingest.py: document.paragraphs
+    # excludes table cells and offers no unified document-order view, so the
+    # walker iterates the raw body XML and uses python-docx only for robust
+    # per-block text extraction.
+    "python-docx>=1.1,<2.0",
     "anthropic>=0.69",
     "openai>=1.0",
     "google-genai>=1.0",

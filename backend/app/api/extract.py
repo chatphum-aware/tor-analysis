@@ -14,6 +14,10 @@ from fastapi.concurrency import run_in_threadpool
 
 from app.config import api_key_for_provider, load_config
 from app.derive.calculations import assemble_document
+from app.ingest.base import UnsupportedDocumentError, UnsupportedKindError
+from app.ingest.detect import sniff_document_kind
+from app.ingest.dispatch import ingest_as, supported_kinds
+from app.ingest.xlsx_ingest import XlsxTooLargeError
 from app.llm.client import ExtractionValidationError, extract as llm_extract
 from app.llm.groups import FIELD_GROUPS, apply_group_overrides
 from app.llm.providers.base import (
@@ -24,9 +28,16 @@ from app.llm.providers.base import (
 )
 from app.llm.providers.registry import get_provider
 from app.models.schema import TORDocument
-from app.pdf.extract import build_document_text, extract_document_from_bytes
 
 router = APIRouter()
+
+_FORMAT_LABELS_TH = {"pdf": "ไฟล์ PDF", "xlsx": "ไฟล์ Excel (.xlsx)", "docx": "ไฟล์ Word (.docx)"}
+
+
+def _supported_formats_th() -> str:
+    """Built from the enabled set, so the error can never promise a format
+    this deployment has turned off (see ingest/dispatch.py)."""
+    return " และ ".join(_FORMAT_LABELS_TH.get(k, k.upper()) for k in supported_kinds())
 
 
 @router.post("/api/extract", response_model=TORDocument)
@@ -45,13 +56,33 @@ async def extract_endpoint(file: UploadFile = File(...)) -> TORDocument:
     if not data:
         raise HTTPException(status_code=400, detail="ไฟล์ว่างเปล่า")
 
+    # Format is decided by magic bytes, never the filename -- see ingest/detect.py.
     try:
-        result = extract_document_from_bytes(data)
-    except Exception as exc:  # noqa: BLE001 - any PyMuPDF open/parse failure -> 400
-        raise HTTPException(status_code=400, detail=f"เปิดไฟล์ PDF ไม่ได้: {exc}") from None
+        kind = sniff_document_kind(data, file.filename)
+    except UnsupportedDocumentError:
+        raise HTTPException(
+            status_code=415,
+            detail=f"รูปแบบไฟล์นี้ไม่รองรับ — รองรับเฉพาะ {_supported_formats_th()}",
+        ) from None
 
-    report = result.scan_report
-    if report.usable_text_ratio == 0.0:
+    try:
+        ingested = ingest_as(kind, data)
+    except UnsupportedKindError as exc:
+        # Recognized the format, just can't read it yet -- say which one.
+        raise HTTPException(
+            status_code=415,
+            detail=f"ยังไม่รองรับไฟล์ {exc.kind.upper()} — รองรับเฉพาะ {_supported_formats_th()}",
+        ) from None
+    except XlsxTooLargeError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from None
+    except Exception as exc:  # noqa: BLE001 - any parser open/parse failure -> 400
+        # Format was recognized, so this is a broken file, not a wrong one.
+        raise HTTPException(
+            status_code=400, detail=f"เปิดไฟล์ {kind.upper()} ไม่ได้: {exc}"
+        ) from None
+
+    # PDF-only gate: a spreadsheet has no pages, so this ratio is None there.
+    if ingested.meta.usable_text_page_ratio == 0.0:
         # rule: never return an empty result for a scanned file -- say so explicitly
         raise HTTPException(
             status_code=422,
@@ -61,7 +92,7 @@ async def extract_endpoint(file: UploadFile = File(...)) -> TORDocument:
             ),
         )
 
-    document_text = build_document_text(result.blocks)
+    document_text = ingested.document_text
 
     groups = apply_group_overrides(FIELD_GROUPS, config.group_overrides)
 
@@ -93,6 +124,7 @@ async def extract_endpoint(file: UploadFile = File(...)) -> TORDocument:
             model=config.model,
             groups=groups,
             provider_for=_provider_for,
+            document_kind=ingested.meta.document_kind,
         )
 
     try:
@@ -128,10 +160,11 @@ async def extract_endpoint(file: UploadFile = File(...)) -> TORDocument:
 
     return assemble_document(
         run.document,
-        scan_report=report,
+        ingest_meta=ingested.meta,
         provider=run.provider,
         model=run.model,
         usage=run.usage,
         duration_ms=run.duration_ms,
         cost=run.cost,
+        source_preview=ingested.preview,
     )

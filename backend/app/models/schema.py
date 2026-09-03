@@ -8,7 +8,7 @@ anything"):
 
   - `TORDocumentExtracted` is what we ask Claude to fill in via
     `messages.parse(output_format=...)`. Every leaf value is wrapped in
-    `Sourced[T]`: a value, its `source` (page + quote), a `confidence`, and
+    `Sourced[T]`: a value, its `source` (locator + quote), a `confidence`, and
     -- if the value is null -- a `reason`. Nothing in this layer is
     computed; it is either found on a page or it's null with a reason.
 
@@ -19,6 +19,7 @@ anything"):
 """
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from typing import Generic, Literal, TypeVar
 
@@ -50,10 +51,102 @@ QualificationCategory = Literal[
 
 QualificationOperator = Literal["ไม่น้อยกว่า", "ไม่เกิน", "เท่ากับ", "อย่างน้อย"]
 
+# Which input format a document came from. Lives here rather than in
+# app/ingest/ because it ships in the API response; app.ingest.base imports it
+# from this module, keeping the dependency pointing one way only.
+DocumentKind = Literal["pdf", "docx", "xlsx"]
 
+
+SourceKind = Literal["text_page", "vision_page", "paragraph", "table_cell_docx", "cell_xlsx"]
+
+# Non-page locators collapse into ONE string field rather than getting a typed
+# field each. This is not a stylistic choice: eight typed locator fields pushed
+# the `misc` group past Anthropic's grammar compiler ("Schema is too complex for
+# compilation", confirmed live on claude-haiku-4-5, 2026-09-03), because `Source`
+# is referenced at all ~26 Sourced leaves. Collapsing to page+ref puts the group
+# back at ~3.6KB, next to the 3.8KB shape that compiles today. The alternative --
+# a 7th FieldGroup -- would resend the whole document text once more on every
+# single extraction, a permanent cost increase, to buy typed coordinates we only
+# ever need for display and one highlight lookup.
+_REF_FORMATS: dict[str, tuple[str, str]] = {
+    # kind: (regex the `ref` string must match, human example)
+    "paragraph": (r"^para:\d+$", "para:12"),
+    "table_cell_docx": (r"^t\d+:r\d+:c\d+$", "t1:r3:c2"),
+    "cell_xlsx": (r"^.+![A-Z]+\d+$", "Sheet1!B5"),
+}
+_PAGE_KINDS: tuple[str, ...] = ("text_page", "vision_page")
+
+
+# NOTE: keep Source's docstring SHORT and put the reasoning in comments like
+# this one. Pydantic ships a model's docstring into its JSON schema as
+# `description`, and Source is referenced at all ~26 Sourced leaves -- a
+# 1.4KB docstring here cost ~1.4KB in EVERY field group's schema and helped
+# push `misc` past Anthropic's grammar compiler. Comments cost nothing.
+#
+# Rule #2 requires a locator plus a verbatim quote. The locator's shape
+# depends on the document's format, because "page" is a PDF concept that DOCX
+# and XLSX genuinely do not have -- a Word page break is a rendering artifact
+# of the reader's page size, not a stored fact, and a spreadsheet's
+# addressable unit is a cell. `kind` says which field is meaningful:
+#
+#   - text_page        PDF with a real text layer      -> page
+#   - vision_page      scanned PDF page read as image  -> page
+#   - paragraph        DOCX body paragraph             -> ref "para:12"
+#   - table_cell_docx  DOCX table cell                 -> ref "t1:r3:c2"
+#   - cell_xlsx        XLSX cell                       -> ref "Sheet1!B5"
+#
+# vision_page stays distinct from text_page on purpose: its `quote` is the
+# model's transcription of an image, not text extracted byte-for-byte, so it
+# carries a different level of trust and must not be silently conflated.
+#
+# `ref`'s format is regex-checked per kind, and that check is load-bearing,
+# not decoration: the model writes this string, and an unparseable one ("the
+# second table") would be a citation no human or viewer could go check --
+# which is the entire point of rule #2.
 class Source(BaseModel):
-    page: int
+    """Where a value came from: a locator (page or ref, per kind) + quote."""
+
+    kind: SourceKind
     quote: str
+
+    page: int | None = None
+    ref: str | None = None
+
+    @model_validator(mode="after")
+    def _enforce_kind_shape(self) -> "Source":
+        if self.kind in _PAGE_KINDS:
+            if self.page is None:
+                raise ValueError(
+                    f"source kind {self.kind!r} requires `page` but it was null "
+                    f"-- rule #2 needs a locator that actually points somewhere"
+                )
+            if self.ref is not None:
+                raise ValueError(
+                    f"source kind {self.kind!r} locates by `page`, so `ref` must "
+                    f"be null (got {self.ref!r})"
+                )
+            return self
+
+        pattern, example = _REF_FORMATS[self.kind]
+        if self.ref is None:
+            raise ValueError(
+                f"source kind {self.kind!r} requires `ref` (e.g. {example!r}) "
+                f"but it was null -- rule #2 needs a locator that actually "
+                f"points somewhere"
+            )
+        if self.page is not None:
+            raise ValueError(
+                f"source kind {self.kind!r} locates by `ref`, so `page` must be "
+                f"null -- this document format has no page numbers "
+                f"(got page={self.page!r})"
+            )
+        if not re.match(pattern, self.ref):
+            raise ValueError(
+                f"source kind {self.kind!r} needs `ref` shaped like {example!r} "
+                f"so it can be resolved back to a place in the document; "
+                f"got {self.ref!r}"
+            )
+        return self
 
 
 class Sourced(BaseModel, Generic[T]):
@@ -80,7 +173,7 @@ class Sourced(BaseModel, Generic[T]):
         if self.value is not None and self.source is None:
             raise ValueError(
                 "value is present but source is missing -- rule #2 requires "
-                "page+quote for every non-null field"
+                "a locator+quote for every non-null field"
             )
         return self
 
@@ -174,15 +267,60 @@ class ExtractionCost(BaseModel):
     is_estimate: bool = True
 
 
+class SheetCell(BaseModel):
+    ref: str  # A1 notation within its sheet, e.g. "B5"
+    value: str  # stringified cell value, exactly as ingested
+
+
+class SheetPreview(BaseModel):
+    name: str
+    cells: list[SheetCell]
+    # True when the sheet had more populated cells than the preview cap.
+    # Surfaced rather than silently trimmed, so the UI can say the view is
+    # partial instead of implying the citation isn't there.
+    truncated: bool = False
+
+
+class DocxBlock(BaseModel):
+    ref: str  # "para:12" or "t1:r3:c2" -- matches Source.ref verbatim
+    text: str
+    kind: Literal["paragraph", "table_cell"]
+
+
+class SourcePreview(BaseModel):
+    """Enough of the source document for the frontend to render it and
+    highlight a citation.
+
+    PDFs don't need this -- the browser renders the user's own file via
+    react-pdf. XLSX (and later DOCX) have no native browser renderer, and
+    the backend has already parsed the file to build `document_text`, so it
+    passes that structure along rather than making the frontend re-parse the
+    upload with a second, heavier library.
+    """
+
+    document_kind: DocumentKind
+    # Exactly one of these is populated, per document_kind: sheets for xlsx,
+    # blocks (paragraphs and table cells, in document order) for docx.
+    sheets: list[SheetPreview] = []
+    blocks: list[DocxBlock] = []
+
+
 class ExtractionMeta(BaseModel):
     """Metadata about the extraction run itself -- not document content, so
     it is intentionally excluded from eval scoring (see the plan's
     Impact/Risk Check: this field changes every run and must not be scored).
     """
 
-    page_count: int
-    usable_text_page_ratio: float  # from scanned.DocumentScanReport
-    image_only_pages: list[int]
+    # Which format the upload actually was, decided by magic bytes (see
+    # app/ingest/detect.py). The three page-shaped fields below are null for
+    # formats that have no pages -- `document_kind` is what explains why, so
+    # unlike rule #3's nulls they need no separate reason.
+    document_kind: DocumentKind
+    page_count: int | None  # pdf only
+    usable_text_page_ratio: float | None  # pdf only, from scanned.DocumentScanReport
+    image_only_pages: list[int] | None  # pdf only
+    paragraph_count: int | None = None  # docx only
+    sheet_names: list[str] | None = None  # xlsx only
     provider: str
     model: str
     pricing_as_of: str
@@ -302,3 +440,8 @@ class TORDocument(BaseModel):
     risk_flags: list[RiskFlag]  # model flags + derived cross-check flags, merged
     contact: ContactInfo
     extraction_meta: ExtractionMeta
+    # Only populated for formats the browser can't render itself (XLSX today).
+    # Optional and last so PDF responses are byte-for-byte what they were, and
+    # so the eval scorer -- which iterates the ground truth's keys, not the
+    # response's -- never sees it.
+    source_preview: SourcePreview | None = None

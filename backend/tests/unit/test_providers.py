@@ -83,19 +83,26 @@ def test_one_group_sends_shared_rules_and_document_as_cacheable_blocks():
     provider = FakeProvider(parsed=BasicInfoGroup.model_construct())
     group = FieldGroup(name="basic_info", schema=BasicInfoGroup, instruction="do the thing")
 
-    _extract_one_group(provider, document_text="DOC TEXT", model="m", group=group)
+    _extract_one_group(
+        provider, document_text="DOC TEXT", model="m", group=group, source_kind_rules="SOURCE RULES"
+    )
 
     blocks = provider.calls[0]["system_blocks"]
-    assert [b.cacheable for b in blocks] == [True, True, False]
-    assert blocks[1].text == "DOC TEXT"
-    assert blocks[2].text == "do the thing"
+    # shared rules + per-format source rules + document all cacheable; only the
+    # per-group instruction (which differs per call) is not.
+    assert [b.cacheable for b in blocks] == [True, True, True, False]
+    assert blocks[1].text == "SOURCE RULES"
+    assert blocks[2].text == "DOC TEXT"
+    assert blocks[3].text == "do the thing"
 
 
 def test_one_group_passes_group_schema_through_untouched():
     provider = FakeProvider(parsed=BasicInfoGroup.model_construct())
     group = FieldGroup(name="basic_info", schema=BasicInfoGroup, instruction="i")
 
-    _extract_one_group(provider, document_text="d", model="m", group=group)
+    _extract_one_group(
+        provider, document_text="d", model="m", group=group, source_kind_rules="SOURCE RULES"
+    )
 
     assert provider.calls[0]["schema"] is BasicInfoGroup
 
@@ -190,7 +197,9 @@ def test_group_without_override_uses_the_default_provider():
     default = FakeProvider(parsed=BasicInfoGroup.model_construct())
     group = FieldGroup(name="basic_info", schema=BasicInfoGroup, instruction="a")
 
-    _extract_one_group(default, document_text="d", model="m", group=group)
+    _extract_one_group(
+        default, document_text="d", model="m", group=group, source_kind_rules="SOURCE RULES"
+    )
 
     assert len(default.calls) == 1
 

@@ -15,7 +15,16 @@ the authoritative definition. **Do not relax any of them to make a model or a pr
    All arithmetic happens in Python (`app/derive/`). *Logical inference counts as computing*:
    "the document says price-only, so technical weight must be 0%" is a rule #1 violation,
    because no document ever wrote that 0.
-2. **Every non-null value carries a `source`** — a page number plus a verbatim quote.
+2. **Every non-null value carries a `source`** — a locator anchoring it to an exact place
+   in the source document, plus a verbatim quote. The locator's shape depends on the
+   document's format, because "page" is a PDF concept: `text_page` (PDF text layer) and
+   `vision_page` (a scanned PDF page read from a rendered image) carry a page number;
+   `paragraph`/`table_cell_docx` carry a paragraph index or table coordinates; `cell_xlsx`
+   carries sheet + cell. A `Source.kind` field says which, and the validator in
+   `schema.py` enforces that a kind carries exactly its own locator fields and no others.
+   For `vision_page`, `quote` is the model's best-effort transcription of the image rather
+   than byte-for-byte extracted text — which is exactly why that kind stays distinct from
+   `text_page` rather than being folded into it.
 3. **A null value carries a `reason`**, never a guess to fill the slot.
 4. **Every field carries a `confidence`** (`high`/`medium`/`low`), including null ones.
 5. **Retry once on validation failure, then fail loudly.** Never return a partial or
