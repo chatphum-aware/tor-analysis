@@ -64,6 +64,21 @@ class FieldGroup:
     # flat ones fine. None means "use the document default".
     provider: str | None = None
     model: str | None = None
+    # Optional per-group output-token ceiling. None means "use client.py's
+    # MAX_TOKENS default". Confirmed live (2026-09-04) that 8000 is too low
+    # for `qualifications` on a real scanned 16-page TOR whose bidder-
+    # qualifications section alone runs ~20 numbered clauses (3.1-3.13.5,
+    # several full paragraphs): the group failed validation on both the
+    # initial attempt and the rule-#5 retry with the exact same symptom --
+    # "EOF while parsing a string" partway through a quote, i.e. the response
+    # was cut off by max_tokens mid-string, not a schema violation a retry
+    # could fix (the retry doesn't reduce how much content the document
+    # actually has). Not raised globally: the other 5 groups have shown no
+    # such failure, and Anthropic's own provider already streams the call
+    # (see anthropic_provider.py), so there's no HTTP-timeout risk at this
+    # size -- same reasoning as MAX_TOKENS's own docstring about not raising
+    # a shared default without evidence a specific case needs it.
+    max_tokens: int | None = None
 
 
 def _load(filename: str) -> str:
@@ -88,7 +103,9 @@ FIELD_GROUPS: list[FieldGroup] = [
     FieldGroup("basic_info", BasicInfoGroup, _load("group_basic_info.md")),
     FieldGroup("key_dates", KeyDatesGroup, _load("group_key_dates.md")),
     FieldGroup("bonds", BondsGroup, _load("group_bonds.md")),
-    FieldGroup("qualifications", QualificationsGroup, _load("group_qualifications.md")),
+    FieldGroup(
+        "qualifications", QualificationsGroup, _load("group_qualifications.md"), max_tokens=16_000
+    ),
     FieldGroup("deliverables", DeliverablesGroup, _load("group_deliverables.md")),
     FieldGroup("misc", MiscGroup, _load("group_misc.md")),
 ]
