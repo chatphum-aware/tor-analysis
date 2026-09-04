@@ -9,8 +9,20 @@ interface ResultTableProps {
   onSelectSource: (source: Source) => void;
 }
 
+const CONFIDENCE_CLASS: Record<Sourced<unknown>["confidence"], string> = {
+  high: "bg-high-bg text-high",
+  medium: "bg-warn-bg text-medium",
+  low: "bg-danger-bg text-low",
+};
+
 function ConfidenceBadge({ confidence }: { confidence: Sourced<unknown>["confidence"] }) {
-  return <span className={`confidence-badge confidence-${confidence}`}>{confidence}</span>;
+  return (
+    <span
+      className={`inline-block rounded-full px-2 py-px text-[0.75rem] font-semibold ${CONFIDENCE_CLASS[confidence]}`}
+    >
+      {confidence}
+    </span>
+  );
 }
 
 function formatValue(value: unknown): string {
@@ -19,6 +31,8 @@ function formatValue(value: unknown): string {
   if (typeof value === "number") return value.toLocaleString("th-TH");
   return String(value);
 }
+
+const CELL_CLASS = "border-b border-bg-subtle px-2 py-1.5 text-left align-top";
 
 function SourcedRow({
   label,
@@ -33,21 +47,28 @@ function SourcedRow({
 }) {
   const clickable = sourced.source !== null;
   const isActive = clickable && isSameSource(sourced.source, selectedSource);
-  const rowClassName = [clickable && "row-clickable", isActive && "row-active"].filter(Boolean).join(" ");
+  const rowClassName = [
+    clickable && "cursor-pointer hover:bg-bg-subtle",
+    isActive && "bg-[#eaf0fd] shadow-[inset_3px_0_0_var(--color-accent)] hover:bg-[#dfe8fc]",
+  ]
+    .filter(Boolean)
+    .join(" ");
   return (
     <tr className={rowClassName} onClick={() => clickable && onSelectSource(sourced.source!)}>
-      <td className="field-label">{label}</td>
-      <td>
+      <td className={`${CELL_CLASS} whitespace-nowrap text-text-muted`}>{label}</td>
+      <td className={CELL_CLASS}>
         {sourced.value === null ? (
-          <span className="null-value">ไม่พบ{sourced.reason ? ` — ${sourced.reason}` : ""}</span>
+          <span className="italic text-text-muted">ไม่พบ{sourced.reason ? ` — ${sourced.reason}` : ""}</span>
         ) : (
           formatValue(sourced.value)
         )}
       </td>
-      <td>
+      <td className={CELL_CLASS}>
         <ConfidenceBadge confidence={sourced.confidence} />
       </td>
-      <td className="field-label">{clickable ? formatLocator(sourced.source) : ""}</td>
+      <td className={`${CELL_CLASS} whitespace-nowrap text-text-muted`}>
+        {clickable ? formatLocator(sourced.source) : ""}
+      </td>
     </tr>
   );
 }
@@ -55,10 +76,16 @@ function SourcedRow({
 function CalculatedRow({ label, value, note }: { label: string; value: number | null; note?: string }) {
   return (
     <tr>
-      <td className="field-label">{label}</td>
-      <td>{value === null ? <span className="null-value">คำนวณไม่ได้{note ? ` — ${note}` : ""}</span> : `${value.toLocaleString("th-TH")}%`}</td>
-      <td className="field-label">คำนวณโดยระบบ</td>
-      <td></td>
+      <td className={`${CELL_CLASS} whitespace-nowrap text-text-muted`}>{label}</td>
+      <td className={CELL_CLASS}>
+        {value === null ? (
+          <span className="italic text-text-muted">คำนวณไม่ได้{note ? ` — ${note}` : ""}</span>
+        ) : (
+          `${value.toLocaleString("th-TH")}%`
+        )}
+      </td>
+      <td className={`${CELL_CLASS} whitespace-nowrap text-text-muted`}>คำนวณโดยระบบ</td>
+      <td className={CELL_CLASS}></td>
     </tr>
   );
 }
@@ -71,15 +98,15 @@ function SectionTable({
   children: ReactNode;
 }) {
   return (
-    <section className="result-section">
-      <h3>{title}</h3>
-      <table className="result-table">
+    <section className="mb-6">
+      <h3 className="mt-4 mb-2 border-b-2 border-border pb-1 text-base font-bold">{title}</h3>
+      <table className="w-full border-collapse text-[0.9rem]">
         <thead>
           <tr>
-            <th>ฟิลด์</th>
-            <th>ค่า</th>
-            <th>ความมั่นใจ</th>
-            <th>ที่มา</th>
+            <th className={`${CELL_CLASS} text-[0.8rem] font-medium text-text-muted`}>ฟิลด์</th>
+            <th className={`${CELL_CLASS} text-[0.8rem] font-medium text-text-muted`}>ค่า</th>
+            <th className={`${CELL_CLASS} text-[0.8rem] font-medium text-text-muted`}>ความมั่นใจ</th>
+            <th className={`${CELL_CLASS} text-[0.8rem] font-medium text-text-muted`}>ที่มา</th>
           </tr>
         </thead>
         <tbody>{children}</tbody>
@@ -108,10 +135,10 @@ export function ResultTable({ doc, selectedSource, onSelectSource }: ResultTable
               <SourcedRow label={`[${i + 1}] ประเภท`} sourced={kd.type} onSelectSource={onSelectSource} selectedSource={selectedSource} />
               <SourcedRow label={`[${i + 1}] วันที่ (พ.ศ.)`} sourced={kd.date_be} onSelectSource={onSelectSource} selectedSource={selectedSource} />
               <tr>
-                <td className="field-label">{`[${i + 1}] วันที่ (ค.ศ.)`}</td>
-                <td>{kd.date_ce || "-"}</td>
-                <td className="field-label">คำนวณโดยระบบ</td>
-                <td></td>
+                <td className={`${CELL_CLASS} whitespace-nowrap text-text-muted`}>{`[${i + 1}] วันที่ (ค.ศ.)`}</td>
+                <td className={CELL_CLASS}>{kd.date_ce || "-"}</td>
+                <td className={`${CELL_CLASS} whitespace-nowrap text-text-muted`}>คำนวณโดยระบบ</td>
+                <td className={CELL_CLASS}></td>
               </tr>
               <SourcedRow label={`[${i + 1}] เวลา`} sourced={kd.time} onSelectSource={onSelectSource} selectedSource={selectedSource} />
               <SourcedRow label={`[${i + 1}] สถานที่`} sourced={kd.location} onSelectSource={onSelectSource} selectedSource={selectedSource} />
@@ -189,20 +216,25 @@ export function ResultTable({ doc, selectedSource, onSelectSource }: ResultTable
       </SectionTable>
 
       {doc.risk_flags.length > 0 && (
-        <section className="result-section">
-          <h3>ข้อที่ควรระวัง</h3>
+        <section className="mb-6">
+          <h3 className="mt-4 mb-2 border-b-2 border-border pb-1 text-base font-bold">ข้อที่ควรระวัง</h3>
           {doc.risk_flags.map((flag, i) => (
             <div
               key={i}
-              className={["risk-flag", isSameSource(flag.source, selectedSource) && "risk-flag-active"]
+              className={[
+                "mb-2 rounded-md bg-warn-bg px-3 py-2 text-[0.9rem]",
+                isSameSource(flag.source, selectedSource) && "shadow-[inset_3px_0_0_var(--color-accent)]",
+                flag.source ? "cursor-pointer" : "cursor-default",
+              ]
                 .filter(Boolean)
                 .join(" ")}
-              style={{ cursor: flag.source ? "pointer" : "default" }}
               onClick={() => flag.source && onSelectSource(flag.source)}
             >
-              <span className="risk-flag-origin">{flag.origin === "model" ? "พบในเอกสาร" : "ตรวจพบโดยระบบ"}</span>
+              <span className="mr-1.5 text-[0.7rem] uppercase text-text-muted">
+                {flag.origin === "model" ? "พบในเอกสาร" : "ตรวจพบโดยระบบ"}
+              </span>
               {flag.text}
-              {flag.source && <span className="field-label"> ({formatLocator(flag.source)})</span>}
+              {flag.source && <span className="whitespace-nowrap text-text-muted"> ({formatLocator(flag.source)})</span>}
             </div>
           ))}
         </section>

@@ -3,7 +3,7 @@ import type { ExtractionMeta } from "../types/schema";
 export function UsageFooter({ meta }: { meta: ExtractionMeta }) {
   const { usage, cost } = meta;
   return (
-    <div className="usage-footer">
+    <div className="flex flex-wrap justify-between gap-2 border-t border-border px-5 py-2 text-[0.8rem] text-text-muted">
       <span>
         token: input {usage.input_tokens.toLocaleString("th-TH")} · output{" "}
         {usage.output_tokens.toLocaleString("th-TH")} · cache write{" "}

@@ -1,416 +1,53 @@
-:root {
-  color-scheme: light;
-  font-family: "Noto Sans Thai", "Sarabun", system-ui, -apple-system, sans-serif;
-  --border: #d9d9e3;
-  --bg-subtle: #f7f7fa;
-  --text-muted: #6b6b76;
-  --accent: #2c5ce0;
-  --danger: #b3261e;
-  --danger-bg: #fdecea;
-  --high: #1a7f37;
-  --medium: #9a6700;
-  --low: #b3261e;
+@import "tailwindcss";
+
+@theme {
+  --color-border: #d9d9e3;
+  --color-bg-subtle: #f7f7fa;
+  --color-text-muted: #6b6b76;
+  --color-accent: #2c5ce0;
+  --color-accent-soft: #e8f0fe;
+  --color-danger: #b3261e;
+  --color-danger-bg: #fdecea;
+  --color-high: #1a7f37;
+  --color-high-bg: #e6f4ea;
+  --color-medium: #9a6700;
+  --color-warn-bg: #fef3e0;
+  --color-low: #b3261e;
+  --color-highlight: #fff3b0;
+  --font-sans: "Noto Sans Thai", "Sarabun", system-ui, -apple-system, sans-serif;
 }
 
-* {
-  box-sizing: border-box;
+@layer base {
+  body {
+    margin: 0;
+    background: #fff;
+    color: #1a1a1f;
+    font-family: var(--font-sans);
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
 }
 
-body {
-  margin: 0;
-  background: #fff;
-  color: #1a1a1f;
-}
+@layer components {
+  .btn-secondary {
+    @apply rounded-md border border-accent bg-white px-4 py-2 text-[0.9rem] text-accent;
+  }
 
-button {
-  font-family: inherit;
-  cursor: pointer;
-}
+  .error-banner {
+    @apply mt-4 whitespace-pre-wrap rounded-md bg-danger-bg px-4 py-3 text-left text-danger;
+  }
 
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.app-shell {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.app-header {
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--border);
-}
-
-.app-header h1 {
-  margin: 0;
-  font-size: 1.25rem;
-}
-
-.app-body {
-  flex: 1;
-  display: flex;
-  min-height: 0;
-}
-
-.upload-screen {
-  margin: auto;
-  max-width: 480px;
-  padding: 32px;
-  text-align: center;
-}
-
-.upload-screen h2 {
-  margin-top: 0;
-}
-
-.upload-screen input[type="file"] {
-  display: block;
-  margin: 16px auto;
-}
-
-.primary-button {
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 20px;
-  font-size: 0.95rem;
-}
-
-.secondary-button {
-  background: #fff;
-  color: var(--accent);
-  border: 1px solid var(--accent);
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-size: 0.9rem;
-}
-
-.error-banner {
-  margin-top: 16px;
-  padding: 12px 16px;
-  background: var(--danger-bg);
-  color: var(--danger);
-  border-radius: 6px;
-  text-align: left;
-  white-space: pre-wrap;
-}
-
-.scanned-notice {
-  margin: auto;
-  max-width: 480px;
-  padding: 24px;
-  background: var(--danger-bg);
-  border: 1px solid var(--danger);
-  border-radius: 8px;
-  text-align: left;
-}
-
-.scanned-notice-hint {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-}
-
-.results-layout {
-  display: flex;
-  width: 100%;
-  min-height: 0;
-}
-
-.results-pane {
-  flex: 1 1 55%;
-  overflow-y: auto;
-  padding: 16px 20px;
-  min-width: 0;
-}
-
-.pdf-pane,
-.viewer-pane {
-  flex: 1 1 45%;
-  border-left: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.result-section {
-  margin-bottom: 24px;
-}
-
-.result-section h3 {
-  font-size: 1rem;
-  margin-bottom: 8px;
-  padding-bottom: 4px;
-  border-bottom: 2px solid var(--border);
-}
-
-.result-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-
-.result-table td,
-.result-table th {
-  text-align: left;
-  padding: 6px 8px;
-  border-bottom: 1px solid var(--bg-subtle);
-  vertical-align: top;
-}
-
-.result-table th {
-  color: var(--text-muted);
-  font-weight: 500;
-  font-size: 0.8rem;
-}
-
-.row-clickable {
-  cursor: pointer;
-}
-
-.row-clickable:hover {
-  background: var(--bg-subtle);
-}
-
-.row-active {
-  background: #eaf0fd;
-  box-shadow: inset 3px 0 0 var(--accent);
-}
-
-.row-active:hover {
-  background: #dfe8fc;
-}
-
-.field-label {
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
-.null-value {
-  color: var(--text-muted);
-  font-style: italic;
-}
-
-.confidence-badge {
-  display: inline-block;
-  padding: 1px 8px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.confidence-high {
-  background: #e6f4ea;
-  color: var(--high);
-}
-
-.confidence-medium {
-  background: #fef3e0;
-  color: var(--medium);
-}
-
-.confidence-low {
-  background: var(--danger-bg);
-  color: var(--low);
-}
-
-.risk-flag {
-  padding: 8px 12px;
-  border-radius: 6px;
-  background: #fef3e0;
-  margin-bottom: 8px;
-  font-size: 0.9rem;
-}
-
-.risk-flag-active {
-  box-shadow: inset 3px 0 0 var(--accent);
-}
-
-.risk-flag-origin {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-right: 6px;
-}
-
-.pdf-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--border);
-  font-size: 0.9rem;
-}
-
-.pdf-viewport {
-  flex: 1;
-  overflow: auto;
-  background: var(--bg-subtle);
-  display: flex;
-  justify-content: center;
-  padding: 16px;
-}
-
-mark.pdf-highlight {
-  background: rgba(255, 224, 102, 0.55);
-  color: inherit;
-  mix-blend-mode: multiply;
-}
-
-.usage-footer {
-  border-top: 1px solid var(--border);
-  padding: 8px 20px;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.export-buttons {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-
-/* --- XLSX source viewer -------------------------------------------------
-   Renders the cell grid the backend parsed, so a "Sheet1!B5" citation can be
-   checked against the actual spreadsheet. Highlighting is exact here (a cell
-   ref is unambiguous), unlike the PDF viewer's best-effort quote matching. */
-
-.viewer-pane {
-  overflow: hidden;
-  padding: 0;
-}
-
-.sheet-tabs {
-  display: flex;
-  gap: 4px;
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--border);
-  overflow-x: auto;
-  flex: 0 0 auto;
-}
-
-.sheet-tab {
-  padding: 4px 10px;
-  font-size: 0.85rem;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.sheet-tab-active {
-  background: var(--accent-soft, #e8f0fe);
-  color: var(--text);
-  font-weight: 600;
-}
-
-.viewer-note {
-  margin: 0;
-  padding: 8px 12px;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--border);
-}
-
-.sheet-scroll {
-  flex: 1 1 auto;
-  overflow: auto;
-  min-height: 0;
-}
-
-.sheet-grid {
-  border-collapse: collapse;
-  font-size: 0.85rem;
-  table-layout: auto;
-}
-
-.sheet-grid th {
-  position: sticky;
-  top: 0;
-  background: var(--surface-muted, #f3f4f6);
-  color: var(--text-muted);
-  font-weight: 600;
-  font-size: 0.75rem;
-  padding: 3px 6px;
-  border: 1px solid var(--border);
-  text-align: center;
-}
-
-.sheet-grid tbody th {
-  position: sticky;
-  left: 0;
-  top: auto;
-}
-
-.sheet-cell {
-  border: 1px solid var(--border);
-  padding: 3px 8px;
-  max-width: 320px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  vertical-align: top;
-}
-
-.sheet-cell-active {
-  background: var(--highlight, #fff3b0);
-  outline: 2px solid var(--accent, #1a73e8);
-  font-weight: 600;
-}
-
-
-/* --- DOCX source viewer -------------------------------------------------
-   Blocks in document order, paragraphs and table cells interleaved, each
-   labelled with the exact ref the model cited so highlighting is exact. */
-
-.doc-scroll {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  min-height: 0;
-  padding: 12px 14px;
-}
-
-.doc-block {
-  display: flex;
-  gap: 10px;
-  padding: 5px 6px;
-  border-radius: 4px;
-  font-size: 0.88rem;
-  line-height: 1.6;
-  scroll-margin: 40px;
-}
-
-.doc-block-cell {
-  border-left: 3px solid var(--border);
-  background: var(--surface-muted, #f7f7f8);
-}
-
-.doc-block-ref {
-  flex: 0 0 auto;
-  color: var(--text-muted);
-  font-size: 0.7rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  padding-top: 3px;
-  user-select: all;
-}
-
-.doc-block-text {
-  flex: 1 1 auto;
-  min-width: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.doc-block-active {
-  background: var(--highlight, #fff3b0);
-  outline: 2px solid var(--accent, #1a73e8);
+  /* Shared side-panel shape for whichever viewer can verify a citation
+     (PdfViewer/DocxViewer/XlsxViewer's root element) -- see App.tsx. */
+  .viewer-pane {
+    @apply flex min-w-0 flex-[1_1_45%] flex-col border-l border-border;
+  }
 }

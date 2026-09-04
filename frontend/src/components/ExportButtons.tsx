@@ -36,11 +36,11 @@ export function ExportButtons({ doc, baseName }: { doc: TORDocument; baseName: s
 
   return (
     <div>
-      <div className="export-buttons">
-        <button className="secondary-button" onClick={handleExportJson}>
+      <div className="mb-4 flex gap-2">
+        <button className="btn-secondary" onClick={handleExportJson}>
           ดาวน์โหลด JSON
         </button>
-        <button className="secondary-button" onClick={handleExportCsv} disabled={isExportingCsv}>
+        <button className="btn-secondary" onClick={handleExportCsv} disabled={isExportingCsv}>
           {isExportingCsv ? "กำลังสร้าง CSV..." : "ดาวน์โหลด CSV"}
         </button>
       </div>

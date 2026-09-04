@@ -16,10 +16,10 @@ interface RejectedFileNoticeProps {
  */
 export function RejectedFileNotice({ message, onReset }: RejectedFileNoticeProps) {
   return (
-    <div className="scanned-notice">
+    <div className="m-auto max-w-[480px] rounded-lg border border-danger bg-danger-bg p-6 text-left">
       <strong>⚠️ ไม่สามารถประมวลผลไฟล์นี้ได้</strong>
       <p>{message}</p>
-      <button className="secondary-button" onClick={onReset}>
+      <button className="btn-secondary" onClick={onReset}>
         ลองไฟล์อื่น
       </button>
     </div>

@@ -28,12 +28,12 @@ export function DocxViewer({ preview, selectedSource }: DocxViewerProps) {
   }, [targetRef]);
 
   if (preview.blocks.length === 0) {
-    return <div className="viewer-pane">ไม่มีข้อความให้แสดง</div>;
+    return <div className="viewer-pane overflow-hidden">ไม่มีข้อความให้แสดง</div>;
   }
 
   return (
-    <div className="viewer-pane">
-      <div className="doc-scroll">
+    <div className="viewer-pane overflow-hidden">
+      <div className="min-h-0 flex-1 overflow-y-auto px-3.5 py-3">
         {preview.blocks.map((block) => {
           const isTarget = targetRef !== null && block.ref === targetRef;
           return (
@@ -41,17 +41,20 @@ export function DocxViewer({ preview, selectedSource }: DocxViewerProps) {
               key={block.ref}
               ref={isTarget ? activeEl : undefined}
               className={[
-                "doc-block",
-                block.kind === "table_cell" && "doc-block-cell",
-                isTarget && "doc-block-active",
+                "flex scroll-mt-10 gap-2.5 rounded p-[5px_6px] text-[0.88rem] leading-[1.6]",
+                block.kind === "table_cell" && "border-l-[3px] border-border bg-[#f7f7f8]",
+                isTarget && "bg-highlight outline outline-2 outline-accent",
               ]
                 .filter(Boolean)
                 .join(" ")}
             >
-              <span className="doc-block-ref" title={block.ref}>
+              <span
+                className="flex-none pt-[3px] font-mono text-[0.7rem] text-text-muted select-all"
+                title={block.ref}
+              >
                 {block.ref}
               </span>
-              <span className="doc-block-text">{block.text}</span>
+              <span className="min-w-0 flex-1 whitespace-pre-wrap break-words">{block.text}</span>
             </div>
           );
         })}

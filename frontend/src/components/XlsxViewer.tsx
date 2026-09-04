@@ -59,18 +59,29 @@ export function XlsxViewer({ preview, selectedSource }: XlsxViewerProps) {
   }, [sheet]);
 
   if (!sheet || !grid) {
-    return <div className="viewer-pane">ไม่มีข้อมูลให้แสดง</div>;
+    return <div className="viewer-pane overflow-hidden">ไม่มีข้อมูลให้แสดง</div>;
   }
 
+  const headerThClass =
+    "sticky top-0 border border-border bg-[#f3f4f6] px-1.5 py-[3px] text-center text-[0.75rem] font-semibold text-text-muted";
+  const rowThClass =
+    "sticky top-auto left-0 border border-border bg-[#f3f4f6] px-1.5 py-[3px] text-center text-[0.75rem] font-semibold text-text-muted";
+  const cellClass = "max-w-[320px] overflow-hidden text-ellipsis whitespace-nowrap border border-border px-2 py-[3px] align-top";
+
   return (
-    <div className="viewer-pane">
+    <div className="viewer-pane overflow-hidden">
       {preview.sheets.length > 1 && (
-        <div className="sheet-tabs">
+        <div className="flex flex-none gap-1 overflow-x-auto border-b border-border px-2.5 py-2">
           {preview.sheets.map((s) => (
             <button
               key={s.name}
               type="button"
-              className={s.name === sheet.name ? "sheet-tab sheet-tab-active" : "sheet-tab"}
+              className={[
+                "whitespace-nowrap rounded border border-border bg-transparent px-2.5 py-1 text-[0.85rem] text-text-muted",
+                s.name === sheet.name && "bg-accent-soft font-semibold",
+              ]
+                .filter(Boolean)
+                .join(" ")}
               onClick={() => setActiveSheet(s.name)}
             >
               {s.name}
@@ -80,25 +91,27 @@ export function XlsxViewer({ preview, selectedSource }: XlsxViewerProps) {
       )}
 
       {sheet.truncated && (
-        <p className="viewer-note">
+        <p className="m-0 border-b border-border px-3 py-2 text-[0.85rem] text-text-muted">
           ⚠️ ชีทนี้มีเซลล์มากกว่าที่แสดงได้ — ส่วนที่แสดงอยู่ไม่ครบทั้งชีท
         </p>
       )}
 
-      <div className="sheet-scroll">
-        <table className="sheet-grid">
+      <div className="min-h-0 flex-1 overflow-auto">
+        <table className="border-collapse text-[0.85rem]">
           <thead>
             <tr>
-              <th />
+              <th className={headerThClass} />
               {grid.cols.map((col) => (
-                <th key={col}>{col}</th>
+                <th key={col} className={headerThClass}>
+                  {col}
+                </th>
               ))}
             </tr>
           </thead>
           <tbody>
             {grid.rows.map((row) => (
               <tr key={row}>
-                <th>{row}</th>
+                <th className={rowThClass}>{row}</th>
                 {grid.cols.map((col) => {
                   const ref = `${col}${row}`;
                   const isTarget = target !== null && target.sheet === sheet.name && target.cell === ref;
@@ -106,7 +119,9 @@ export function XlsxViewer({ preview, selectedSource }: XlsxViewerProps) {
                     <td
                       key={ref}
                       ref={isTarget ? cellRef : undefined}
-                      className={isTarget ? "sheet-cell sheet-cell-active" : "sheet-cell"}
+                      className={[cellClass, isTarget && "bg-highlight font-semibold outline outline-2 outline-accent"]
+                        .filter(Boolean)
+                        .join(" ")}
                       title={ref}
                     >
                       {grid.byRef.get(ref) ?? ""}

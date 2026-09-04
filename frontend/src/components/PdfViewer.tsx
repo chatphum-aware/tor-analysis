@@ -35,6 +35,11 @@ function escapeHtml(s: string): string {
     .replace(/>/g, "&gt;");
 }
 
+// Tailwind's content scanner picks up class names inside plain text, so this
+// literal HTML string still gets its utility classes generated even though
+// it's never parsed as JSX (see customTextRenderer below).
+const HIGHLIGHT_CLASS = "bg-[rgba(255,224,102,0.55)] text-inherit mix-blend-multiply";
+
 export function PdfViewer({ file, targetPage, targetQuote }: PdfViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -46,10 +51,10 @@ export function PdfViewer({ file, targetPage, targetQuote }: PdfViewerProps) {
   const normalizedQuote = targetQuote ? normalize(targetQuote) : null;
 
   return (
-    <div className="pdf-pane">
-      <div className="pdf-toolbar">
+    <div className="viewer-pane">
+      <div className="flex items-center gap-2 border-b border-border px-3 py-2 text-[0.9rem]">
         <button
-          className="secondary-button"
+          className="btn-secondary"
           disabled={currentPage <= 1}
           onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
         >
@@ -59,14 +64,14 @@ export function PdfViewer({ file, targetPage, targetQuote }: PdfViewerProps) {
           หน้า {currentPage} {numPages ? `/ ${numPages}` : ""}
         </span>
         <button
-          className="secondary-button"
+          className="btn-secondary"
           disabled={!numPages || currentPage >= numPages}
           onClick={() => setCurrentPage((p) => (numPages ? Math.min(numPages, p + 1) : p))}
         >
           ถัดไป
         </button>
       </div>
-      <div className="pdf-viewport">
+      <div className="flex flex-1 justify-center overflow-auto bg-bg-subtle p-4">
         <Document
           file={file}
           onLoadSuccess={({ numPages: n }) => setNumPages(n)}
@@ -81,7 +86,7 @@ export function PdfViewer({ file, targetPage, targetQuote }: PdfViewerProps) {
                 ? ({ str }: { str: string }) => {
                     const normalizedStr = normalize(str);
                     if (normalizedStr.length > 0 && normalizedQuote.includes(normalizedStr)) {
-                      return `<mark class="pdf-highlight">${escapeHtml(str)}</mark>`;
+                      return `<mark class="${HIGHLIGHT_CLASS}">${escapeHtml(str)}</mark>`;
                     }
                     return escapeHtml(str);
                   }

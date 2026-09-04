@@ -40,12 +40,12 @@ export function App() {
   const isRejectedError = mutation.error instanceof ApiError && mutation.error.status === 422;
 
   return (
-    <div className="app-shell">
-      <header className="app-header">
-        <h1>TOR Analyzer</h1>
+    <div className="flex h-screen flex-col overflow-hidden">
+      <header className="border-b border-border px-6 py-4">
+        <h1 className="m-0 text-xl font-bold">TOR Analyzer</h1>
       </header>
 
-      <div className="app-body">
+      <div className="flex min-h-0 flex-1 overflow-y-auto">
         {!mutation.data && !isRejectedError && (
           <UploadPane
             onSubmit={handleSubmit}
@@ -65,8 +65,13 @@ export function App() {
         )}
 
         {mutation.data && file && (
-          <div className="results-layout">
-            <div className="results-pane">
+          <div className="flex min-h-0 w-full">
+            <div className="min-w-0 flex-[1_1_55%] overflow-y-auto px-5 py-4">
+              <div className="mb-3">
+                <button className="btn-secondary" onClick={handleReset}>
+                  ← กลับไปหน้าอัปโหลด
+                </button>
+              </div>
               <ExportButtons
                 doc={mutation.data}
                 baseName={file.name.replace(/\.(pdf|docx|xlsx)$/i, "")}
