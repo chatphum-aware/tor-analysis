@@ -106,7 +106,7 @@ def _extract_one_group(
                 ),
                 schema=group.schema,
                 model=model,
-                max_tokens=MAX_TOKENS,
+                max_tokens=group.max_tokens or MAX_TOKENS,
             )
         except (ValidationError, ProviderAPIError) as exc:
             # A reasoning model can exhaust MAX_TOKENS on internal reasoning

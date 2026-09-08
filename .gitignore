@@ -3,8 +3,10 @@
 .env.*
 !.env.example
 
-# ---- documents (never commit real TOR PDFs) ----
+# ---- documents (never commit real TOR documents) ----
 *.pdf
+*.docx
+*.xlsx
 outputs/
 
 # ---- python ----
